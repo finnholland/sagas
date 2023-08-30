@@ -1,3 +1,75 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+/* replace a icon with a image */
+.rmel-iconfont {
+  display: none;
+}
+.button-type-header, .button-type-wrap, .button-type-table, .button-type-header, .button-type-clear, .button-type-undo, .button-type-redo {
+  display: none !important;
+}
+.button-type-link {
+  background-image: url("./assets/svg/link.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.button-type-code-inline {
+  background-image: url("./assets/svg/code.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.button-type-strikethrough {
+  background-image: url("./assets/svg/strikethrough.svg");
+  background-position: center;
+}
+.button-type-bold {
+  background-image: url("./assets/svg/bold.svg");
+  background-position: center;
+}
+.button-type-italic {
+  background-image: url("./assets/svg/italic.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.button-type-underline {
+  background-image: url("./assets/svg/underline.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.button-type-code-block {
+  background-image: url("./assets/svg/codeBlock.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.button-type-quote {
+  background-image: url("./assets/svg/quote.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.button-type-listc {
+  background-image: url("./assets/svg/listc.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.button-type-unordered {
+  background-image: url("./assets/svg/listu.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.button-type-ordered {
+  background-image: url("./assets/svg/listo.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.button-type-image {
+  background-image: url("./assets/svg/image.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.button-type-image {
+  background-image: url("./assets/svg/image.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
