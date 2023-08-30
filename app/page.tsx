@@ -1,16 +1,17 @@
 'use client'
 import React, { useState } from 'react';
 import Image from 'next/image'
-import Editor from 'react-markdown-editor-lite';
 import ReactMarkdown from 'react-markdown';
+import "react-markdown-editor-lite/lib/index.css";
 import dynamic from 'next/dynamic';
+import MarkdownIt from 'markdown-it';
+const mdParser = new MarkdownIt(/* Markdown-it options */);
 
 const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
 });
 
 export default function Home() {
-  const mdEditor = React.createRef<Editor>();
   const [value, setValue] = useState("xxx");
   
   const handleEditorChange = ({ html, text }: { html: string, text: string }) => {
@@ -26,12 +27,12 @@ export default function Home() {
 
         </div>
       </div>
-      <div className='bg-violet-400 w-1/2 text-center h-full px-20'>
+      <div className='bg-violet-400 w-1/2 h-full px-20'>
         <div className='bg-violet-300 w-full h-full'>
           <MdEditor
-            style={{ height: "500px" }}
-            // eslint-disable-next-line react/no-children-prop
-            renderHTML={(text) => <ReactMarkdown children={text} />}
+            plugins={['link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'font-underline', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
+            style={{ height: "500px", borderColor: '#6ED0D7' }} className=' border-blue-400 border-8'
+            renderHTML={text => mdParser.render(text)}
           />
         </div>
       </div>
