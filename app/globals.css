@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 
+.button-wrap {
+  align-items: center;
+  height: 100%;
+}
+
 /* replace a icon with a image */
 .rmel-iconfont {
   display: none;
@@ -10,72 +15,84 @@
 .button-type-header, .button-type-wrap, .button-type-table, .button-type-header, .button-type-clear, .button-type-undo, .button-type-redo {
   display: none !important;
 }
+.button-type-mode {
+  background-image: url("./assets/svg/eye.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: auto;aspect-ratio: 1/1; height: 100%;
+}
 .button-type-link {
   background-image: url("./assets/svg/link.svg");
   background-position: center;
   background-repeat: no-repeat;
+  background-size: contain;aspect-ratio: 1/1; height: 100%;
 }
 .button-type-code-inline {
   background-image: url("./assets/svg/code.svg");
   background-position: center;
   background-repeat: no-repeat;
+  background-size: contain;
+  aspect-ratio: 1/1; height: 100%;
 }
 .button-type-strikethrough {
   background-image: url("./assets/svg/strikethrough.svg");
   background-position: center;
+  background-size: cover;
+  aspect-ratio: 1/1; height: 100%;
 }
 .button-type-bold {
   background-image: url("./assets/svg/bold.svg");
   background-position: center;
+  background-size: contain;aspect-ratio: 1/1; height: 100%;
 }
 .button-type-italic {
   background-image: url("./assets/svg/italic.svg");
   background-position: center;
   background-repeat: no-repeat;
+  background-size: contain;aspect-ratio: 1/1; height: 100%;
 }
 .button-type-underline {
   background-image: url("./assets/svg/underline.svg");
   background-position: center;
   background-repeat: no-repeat;
+  background-size: contain;aspect-ratio: 1/1; height: 100%;
 }
 .button-type-code-block {
   background-image: url("./assets/svg/codeBlock.svg");
   background-position: center;
   background-repeat: no-repeat;
+  background-size: contain;aspect-ratio: 1/1; height: 100%;
 }
 .button-type-quote {
   background-image: url("./assets/svg/quote.svg");
   background-position: center;
   background-repeat: no-repeat;
+  background-size: contain;aspect-ratio: 1/1; height: 100%;
 }
 .button-type-listc {
   background-image: url("./assets/svg/listc.svg");
   background-position: center;
   background-repeat: no-repeat;
+  background-size: contain;aspect-ratio: 1/1; height: 100%;
 }
 .button-type-unordered {
   background-image: url("./assets/svg/listu.svg");
   background-position: center;
   background-repeat: no-repeat;
+  background-size: contain;aspect-ratio: 1/1; height: 100%;
 }
 .button-type-ordered {
   background-image: url("./assets/svg/listo.svg");
   background-position: center;
   background-repeat: no-repeat;
+  background-size: contain;aspect-ratio: 1/1; height: 100%;
 }
 .button-type-image {
   background-image: url("./assets/svg/image.svg");
   background-position: center;
   background-repeat: no-repeat;
-}
-.button-type-image {
-  background-image: url("./assets/svg/image.svg");
-  background-position: center;
-  background-repeat: no-repeat;
-  mask: var(--svg);
-  -webkit-mask: var(--svg);
-  color: transparent;
-  color: aliceblue !important;
+  background-size: contain;
+  aspect-ratio: 1/1; height: 100%;
 }
 
 .rc-md-navigation {

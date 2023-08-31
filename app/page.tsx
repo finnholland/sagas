@@ -13,12 +13,13 @@ const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
 
 export default function Home() {
   const [value, setValue] = useState("xxx");
+  const [preview, setPreview] = useState(false);
+
   
-  const handleEditorChange = ({ html, text }: { html: string, text: string }) => {
-    const newValue = text.replace(/\d/g, "");
-    console.log(newValue);
-    setValue(newValue);
-  };
+  function handleEditorChange({ html, text }: { html: string, text: string }) {
+    if (html && text)
+      console.log("handleEditorChange", html, text);
+  }
 
   return (
     <div className=' px-10 py-10 flex-1 flex h-full flex-row justify-between items-center'>
@@ -28,10 +29,11 @@ export default function Home() {
         </div>
       </div>
       <div className='w-1/2 h-full px-20'>
+        <button onClick={() => setPreview(!preview)}>change mode</button>
         <div className='border-sky-300 border-2 rounded-2xl overflow-clip'>
           <MdEditor
-            view={{md: true, menu: true, html: false}}
-            plugins={['link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'font-underline', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
+            onChange={handleEditorChange}
+            plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'font-underline', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
             style={{ height: "500px" }} className=' rounded-2xl border-none' markdownClass='border-sky-300 border-8'
             renderHTML={text => mdParser.render(text)}
           />
