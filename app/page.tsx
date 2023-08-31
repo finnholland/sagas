@@ -22,16 +22,17 @@ export default function Home() {
 
   return (
     <div className=' px-10 py-10 flex-1 flex h-full flex-row justify-between items-center'>
-      <div className='bg-blue-400 w-1/4 flex-3 text-center h-full px-10'>
+      <div className='bg-sky-300 w-1/4 flex-3 text-center h-full px-10'>
         <div className='bg-blue-300 w-full h-full'>
 
         </div>
       </div>
-      <div className='bg-violet-400 w-1/2 h-full px-20'>
-        <div className='bg-violet-300 w-full h-full'>
+      <div className='w-1/2 h-full px-20'>
+        <div className='border-sky-300 border-2 rounded-2xl overflow-clip'>
           <MdEditor
+            view={{md: true, menu: true, html: false}}
             plugins={['link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'font-underline', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
-            style={{ height: "500px", borderColor: '#6ED0D7' }} className=' border-blue-400 border-8'
+            style={{ height: "500px" }} className=' rounded-2xl border-none' markdownClass='border-sky-300 border-8'
             renderHTML={text => mdParser.render(text)}
           />
         </div>

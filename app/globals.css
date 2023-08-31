@@ -72,4 +72,17 @@
   background-image: url("./assets/svg/image.svg");
   background-position: center;
   background-repeat: no-repeat;
+  mask: var(--svg);
+  -webkit-mask: var(--svg);
+  color: transparent;
+  color: aliceblue !important;
+}
+
+.rc-md-navigation {
+  background-color: #7dd3fc !important;
+  border: none !important;
+}
+
+.rc-md-editor {
+  border: none !important;
 }
