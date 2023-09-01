@@ -28,13 +28,14 @@ export default function Home() {
 
         </div>
       </div>
-      <div className='w-1/2 h-full px-20'>
+      <div className='w-1/2 h-full px-20 flex flex-col'>
         <button onClick={() => setPreview(!preview)}>change mode</button>
         <div className='border-sky-300 border-2 rounded-2xl overflow-clip'>
           <MdEditor
+            placeholder='blog loblaw'
             onChange={handleEditorChange}
             plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'font-underline', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
-            style={{ height: "500px" }} className=' rounded-2xl border-none' markdownClass='border-sky-300 border-8'
+            style={{ minHeight: "500px" }} className='flex flex-grow rounded-2xl border-none'
             renderHTML={text => mdParser.render(text)}
           />
         </div>
