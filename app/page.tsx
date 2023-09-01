@@ -25,7 +25,7 @@ export default function Home() {
 
         </div>
       </div>
-      <div className='w-1/2 h-full px-20 flex flex-col '>
+      <div className='w-1/2 h-full px-20 flex flex-col'>
         <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full'>
           <MdEditor
             view={{menu: true, html: false, md: true}}

@@ -1,0 +1,14 @@
+{
+  "resourceName": "sagas",
+  "tableName": "post",
+  "partitionKey": {
+    "fieldName": "createdAt",
+    "fieldType": "string"
+  },
+  "sortKey": {
+    "fieldName": "saga",
+    "fieldType": "string"
+  },
+  "gsi": [],
+  "triggerFunctions": []
+}
