@@ -13,8 +13,6 @@ const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
 
 export default function Home() {
   const [value, setValue] = useState("xxx");
-  const [preview, setPreview] = useState(false);
-
   
   function handleEditorChange({ html, text }: { html: string, text: string }) {
     if (html && text)
@@ -28,14 +26,13 @@ export default function Home() {
 
         </div>
       </div>
-      <div className='w-1/2 h-full px-20 flex flex-col'>
-        <button onClick={() => setPreview(!preview)}>change mode</button>
-        <div className='border-sky-300 border-2 rounded-2xl overflow-clip'>
+      <div className='w-1/2 h-full px-20 flex flex-col '>
+        <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full'>
           <MdEditor
             placeholder='blog loblaw'
             onChange={handleEditorChange}
             plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'font-underline', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
-            style={{ minHeight: "500px" }} className='flex flex-grow rounded-2xl border-none'
+            className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500'
             renderHTML={text => mdParser.render(text)}
           />
         </div>
