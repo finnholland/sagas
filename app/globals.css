@@ -16,16 +16,33 @@
   display: none !important;
 }
 .button-type-mode {
+  aspect-ratio: 1/1;
+  height: 100%;
+}
+.rmel-icon-visibility {
+  display: inline;
+  color: transparent;
   background-image: url("./assets/svg/eye.svg");
   background-position: center;
   background-repeat: no-repeat;
   background-size: auto;aspect-ratio: 1/1; height: 100%;
 }
+.rmel-icon-keyboard {
+  display: inline;
+  color: transparent;
+  background-image: url("./assets/svg/pencil.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: auto;
+  aspect-ratio: 1/1; height: 100%;
+}
+
 .button-type-link {
   background-image: url("./assets/svg/link.svg");
   background-position: center;
   background-repeat: no-repeat;
-  background-size: contain;aspect-ratio: 1/1; height: 100%;
+  background-size: contain;
+  aspect-ratio: 1/1; height: 100%;
 }
 .button-type-code-inline {
   background-image: url("./assets/svg/code.svg");
