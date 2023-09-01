@@ -116,6 +116,14 @@
   background-color: #7dd3fc !important;
   border: none !important;
 }
+.rc-md-divider {
+  color: #fff;
+  margin-right: 1rem;
+  margin-left: 1rem;
+  height: 65%;
+  border-radius: 1px;
+  width: 2px !important
+}
 
 .rc-md-editor {
   border: none !important;
