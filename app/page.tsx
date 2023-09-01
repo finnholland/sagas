@@ -1,7 +1,6 @@
 'use client'
 import React, { useState } from 'react';
 import Image from 'next/image'
-import ReactMarkdown from 'react-markdown';
 import "react-markdown-editor-lite/lib/index.css";
 import dynamic from 'next/dynamic';
 import MarkdownIt from 'markdown-it';
@@ -29,6 +28,8 @@ export default function Home() {
       <div className='w-1/2 h-full px-20 flex flex-col '>
         <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full'>
           <MdEditor
+            view={{menu: true, html: false, md: true}}
+            canView={{menu: true, html: true, both: false, fullScreen: false, hideMenu: false, md: true}}
             placeholder='blog loblaw'
             onChange={handleEditorChange}
             plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'font-underline', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
