@@ -4,50 +4,47 @@ from boto3.dynamodb.conditions import Key
 import datetime
 
 tableName = 'sagas'
-datetime = datetime.datetime.now(datetime.timezone.utc)
-defaultDate = datetime.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-query_params = {
-    'TableName': tableName,
-    'KeyConditionExpression': '',  # Initialize an empty condition
-    'ExpressionAttributeNames': {},
-    'ExpressionAttributeValues': {}
-}
-
-optional_params = {
-    "title": "title",
-    "body": "body",
-    "createdAt": "createdAt",
-    "author": "author",
-    "visible": "visible",
-    "tags": [],
-    "saga": "saga"
-}
+indexName = 'type-createdAt-index'
 
 def lambda_handler(event, context):
+    query_params = {
+        'TableName': tableName,
+        'IndexName': indexName,
+        'KeyConditionExpression': '',
+        'FilterExpression': '',
+        'ExpressionAttributeNames': {},
+        'ExpressionAttributeValues': {}
+    }
+    
+    optional_params = {
+        "title": "title",
+        "body": "body",
+        "createdAt": "createdAt",
+        "author": "author",
+        "visible": "visible",
+        "tags": [],
+        "saga": "saga"
+    }
+    
+    createdAt = datetime.datetime.now().isoformat()
     client = boto3.resource('dynamodb').Table(tableName)
-    body2 = event
-    print(body2)
+    body = json.loads(event['body'])
+    
+    query_params['KeyConditionExpression'] += f'#type = :type'
+    query_params['ExpressionAttributeNames'][f'#type'] = 'type'
+    query_params['ExpressionAttributeValues'][f':type'] = 'blog'
     for param_key, attr_name in optional_params.items():
-        if param_key in body2 and body2[param_key] is not None:
+        if param_key in body and body[param_key] is not None:
             if param_key == 'tags':
                 # For array attributes, check if the value exists in the array
-                query_params['KeyConditionExpression'] += f'contains(#{attr_name}, :{param_key}) AND '
+                query_params['FilterExpression'] += f'contains(#{attr_name}, :{param_key}) AND '
             else:
-                query_params['KeyConditionExpression'] += f'#{attr_name} = :{param_key} AND '
+                query_params['FilterExpression'] += f'#{attr_name} = :{param_key} AND '
             query_params['ExpressionAttributeNames'][f'#{attr_name}'] = attr_name
-            query_params['ExpressionAttributeValues'][f':{param_key}'] = body2[param_key]
-
-
-    if 'createdAt' not in body2.__str__():
-        query_params['KeyConditionExpression'] += f'#createdAt = :createdAt AND '
-        query_params['ExpressionAttributeNames'][f'#createdAt'] = 'createdAt'
-        query_params['ExpressionAttributeValues'][f':createdAt'] = '2023-09-05'
-
+            query_params['ExpressionAttributeValues'][f':{param_key}'] = body[param_key]
         
-    if query_params['KeyConditionExpression'].endswith(' AND '):
-        query_params['KeyConditionExpression'] = query_params['KeyConditionExpression'][:-5]
-        
+    if query_params['FilterExpression'].endswith(' AND '):
+        query_params['FilterExpression'] = query_params['FilterExpression'][:-5]
         
     response = client.query(**query_params)
     

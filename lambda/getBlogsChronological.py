@@ -2,25 +2,36 @@ import json
 import boto3
 
 dynamodb = boto3.client('dynamodb')
+tableName = 'sagas'
+indexName = 'type-createdAt-index'
 
 def lambda_handler(event, context):
-    
+    scanIndexForward = False
     try:
-        last_evaluated_key = event.get('last_evaluated_key')
-
-        # Scan the table for items where 'createdAt' exists, starting from the last evaluated key
-        if last_evaluated_key is not None:
-            response = dynamodb.scan(
-                TableName='sagas',
-                FilterExpression='attribute_exists(createdAt)',
-                Limit=5,  # Limit the result to 5 records per page
-                ExclusiveStartKey= last_evaluated_key  # Use the last evaluated key for pagination
+        last_evaluated_key = None
+        if event['queryStringParameters'] is not None and event['queryStringParameters']['last_evaluated_key'] is not None:
+            last_evaluated_key = json.loads(event['queryStringParameters']['last_evaluated_key'])
+        
+        if last_evaluated_key:
+            response = dynamodb.query(
+                TableName=tableName,
+                IndexName=indexName,
+                KeyConditionExpression='#type = :type',
+                ExpressionAttributeNames={'#type': 'type'},
+                ExpressionAttributeValues={':type': {'S': 'blog'}},
+                Limit=5,
+                ExclusiveStartKey=last_evaluated_key,
+                ScanIndexForward=scanIndexForward
             )
         else:
-            response = dynamodb.scan(
-                TableName='sagas',
-                FilterExpression='attribute_exists(createdAt)',
+            response = dynamodb.query(
+                TableName=tableName,
+                IndexName=indexName,
+                KeyConditionExpression='#type = :type',
+                ExpressionAttributeNames={'#type': 'type'},
+                ExpressionAttributeValues={':type': {'S': 'blog'}},
                 Limit=5,  # Limit the result to 5 records per page
+                ScanIndexForward=scanIndexForward
             )
 
         items = response['Items']

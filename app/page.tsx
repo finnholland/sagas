@@ -1,14 +1,17 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image'
 import "react-markdown-editor-lite/lib/index.css";
 import dynamic from 'next/dynamic';
 import MarkdownIt from 'markdown-it';
+import Axios from 'axios';
 const mdParser = new MarkdownIt(/* Markdown-it options */);
+import {API} from './constants'
 
 const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
 });
+let last_evaluated_key =  ''
 
 export default function Home() {
   const [value, setValue] = useState("xxx");
@@ -17,6 +20,24 @@ export default function Home() {
     if (html && text)
       console.log("handleEditorChange", html, text);
   }
+
+  useEffect(() => {
+    const stringy = last_evaluated_key ? JSON.stringify(last_evaluated_key) : ''
+    if (stringy !== '') {
+      Axios.get(`${API}/getBlogs`, { params: { last_evaluated_key: stringy }}).then(res => {
+        console.log(res.data.items)
+        last_evaluated_key = res.data.last_evaluated_key
+        console.log(last_evaluated_key)
+      })
+    } else {
+      Axios.get(`${API}/getBlogs`).then(res => {
+        console.log(res.data.items)
+        last_evaluated_key = res.data.last_evaluated_key
+        console.log(last_evaluated_key)
+      })
+    }
+
+  }, [])
 
   return (
     <div className=' px-10 py-10 flex-1 flex h-full flex-row justify-between items-center'>
