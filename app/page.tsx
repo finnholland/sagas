@@ -13,36 +13,65 @@ const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
 });
 let last_evaluated_key =  ''
 
+interface PreBlog {
+  title: string,
+  body: string,
+  userId: string,
+  visible: boolean,
+  tags: string[],
+  saga: string
+}
+interface Blog {
+  id: string
+  createdAt: Date
+  title: string,
+  body: string,
+  userId: string,
+  visible: boolean,
+  tags: string[],
+  saga: string
+}
+
 export default function Home() {
-  const [value, setValue] = useState("xxx");
+  const [value, setValue] = useState('');
+  const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: '123abc', visible: true, tags: [], saga: ''});
+  const [blogs, setBlogs] = useState<Blog>();
   
   function handleEditorChange({ html, text }: { html: string, text: string }) {
     if (html && text)
-      console.log("handleEditorChange", html, text);
+      setPreBlog(prev => ({ ...prev, body: text }))
   }
 
-  useEffect(() => {
-    const stringy = last_evaluated_key ? JSON.stringify(last_evaluated_key) : ''
-    if (stringy !== '') {
-      Axios.get(`${API}/getBlogs`, { params: { last_evaluated_key: stringy }}).then(res => {
-        console.log(res.data.items)
-        last_evaluated_key = res.data.last_evaluated_key
-        console.log(last_evaluated_key)
-      })
-    } else {
-      Axios.get(`${API}/getBlogs`).then(res => {
-        console.log(res.data.items)
-        last_evaluated_key = res.data.last_evaluated_key
-        console.log(last_evaluated_key)
-      })
-    }
+  // useEffect(() => {
+  //   const stringy = last_evaluated_key ? JSON.stringify(last_evaluated_key) : ''
+  //   if (stringy !== '') {
+  //     Axios.get(`${API}/getBlogs`, { params: { last_evaluated_key: stringy }}).then(res => {
+  //       console.log(res.data.items)
+  //       last_evaluated_key = res.data.last_evaluated_key
+  //       console.log(last_evaluated_key)
+  //     })
+  //   } else {
+  //     Axios.get(`${API}/getBlogs`).then(res => {
+  //       console.log(res.data.items)
+  //       last_evaluated_key = res.data.last_evaluated_key
+  //       console.log(last_evaluated_key)
+  //     })
+  //   }
 
-  }, [])
+  // }, [])
 
+  const createBlog = () => {
+    console.table(preBlog)
+    Axios.post(`${API}/createBlog`, { 
+      preBlog
+    }).then(res => {
+      console.log(res)
+    })
+  }
   return (
     <div className=' px-10 py-10 flex-1 flex h-full flex-row justify-between items-center'>
-      <div className='bg-sky-300 w-1/4 flex-3 text-center h-full px-10'>
-        <div className='bg-blue-300 w-full h-full'>
+      <div className='w-1/4 flex-3 text-center h-full px-10'>
+        <div className='w-full h-full'>
 
         </div>
       </div>
@@ -58,6 +87,13 @@ export default function Home() {
             renderHTML={text => mdParser.render(text)}
           />
         </div>
+        <div className='flex-row flex justify-between mt-3'>
+          <button className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>cancel</button>
+          <button onClick={() => createBlog()} disabled={preBlog.body == ''} className={`${preBlog.body == '' ? 'bg-sky-200' : 'bg-sky-300' } px-8 py-2 rounded-full text-neutral-50 font-bold`}>post</button>
+        </div>
+        <input type="text" placeholder='title' onChange={(e) => setPreBlog(prev => ({...prev, title: e.target.value}))}/>
+        <input type="text" placeholder='tags' onChange={(e) => setPreBlog(prev => ({...prev, tags: e.target.value.split(',')}))}/>
+        <input type="text" placeholder='saga' onChange={(e) => setPreBlog(prev => ({...prev, saga: e.target.value}))}/>
       </div>
       <div className='w-1/4 flex-3 h-full px-10' >
         <div>
