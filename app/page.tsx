@@ -17,6 +17,7 @@ interface PreBlog {
   title: string,
   body: string,
   userId: string,
+  author: string,
   visible: boolean,
   tags: string[],
   saga: string
@@ -34,7 +35,7 @@ interface Blog {
 
 export default function Home() {
   const [value, setValue] = useState('');
-  const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: '123abc', visible: true, tags: [], saga: ''});
+  const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: '123abc', author: 'binn', visible: true, tags: [], saga: ''});
   const [blogs, setBlogs] = useState<Blog>();
   
   function handleEditorChange({ html, text }: { html: string, text: string }) {
@@ -62,9 +63,7 @@ export default function Home() {
 
   const createBlog = () => {
     console.table(preBlog)
-    Axios.post(`${API}/createBlog`, { 
-      preBlog
-    }).then(res => {
+    Axios.post(`${API}/createBlog`, preBlog ).then(res => {
       console.log(res)
     })
   }
