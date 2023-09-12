@@ -13,17 +13,17 @@ export const getBlogAge = (createdAt: string) => {
 
   let ageString = ''
   if (YEAR > 1) {
-    ageString = YEAR.toString() + ' years ago'
+    ageString = YEAR.toString() + ( YEAR > 2 ? ' years' : ' year') + ' ago'
   } else if (MONTH > 1) {
-    ageString = MONTH.toString() + ' months ago';
+    ageString = MONTH.toString() + (MONTH > 2 ? ' months' : ' month') + ' ago';
   } else if (WEEK > 1) {
-    ageString = WEEK.toString() + ' weeks ago'; // minutes -> hours
+    ageString = WEEK.toString() + (WEEK > 2 ? ' weeks' : ' week') + ' ago'; // minutes -> hours
   } else if (DAY > 1) {
-    ageString = DAY.toString() + ' days ago'; // minutes -> hours -> days
+    ageString = DAY.toString() + (DAY > 2 ? ' days' : ' day') + ' ago'; // minutes -> hours -> days
   } else if (HOUR > 1) {
-    ageString = HOUR.toString() + ' hours ago';
+    ageString = HOUR.toString() + (HOUR > 2 ? ' hours' : ' hour') + ' ago';
   } else if (MINUTE > 1) {
-    ageString = MINUTE.toString() + ' minutes ago'
+    ageString = MINUTE.toString() + (MINUTE > 2 ? ' minutes' : ' minute') + ' ago'
   } else {
     ageString = 'just now'
   }
