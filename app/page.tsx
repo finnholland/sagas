@@ -3,9 +3,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image'
 import "react-markdown-editor-lite/lib/index.css";
 import dynamic from 'next/dynamic';
-import MarkdownIt from 'markdown-it';
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
-const mdParser = new MarkdownIt(/* Markdown-it options */);
 import {API} from './constants'
 
 const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
@@ -79,9 +80,9 @@ export default function Home() {
             canView={{menu: true, html: true, both: false, fullScreen: false, hideMenu: false, md: true}}
             placeholder='blog loblaw'
             onChange={handleEditorChange}
-            plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'font-underline', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
+            plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
             className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500'
-            renderHTML={text => mdParser.render(text)}
+            renderHTML={text => <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{text}</ReactMarkdown>}
           />
         </div>
         <div className='flex-row flex justify-between mt-3'>
@@ -91,12 +92,13 @@ export default function Home() {
         <input type="text" placeholder='title' onChange={(e) => setPreBlog(prev => ({...prev, title: e.target.value}))}/>
         <input type="text" placeholder='tags' onChange={(e) => setPreBlog(prev => ({...prev, tags: e.target.value.split(',')}))}/>
         <input type="text" placeholder='saga' onChange={(e) => setPreBlog(prev => ({ ...prev, saga: e.target.value }))} />
+        
         {blogs?.map((item) => ( 
-            <div key={item.id}>
-              <span>{item.title}</span>
-              <span>{item.createdAt}</span>
-              <span>{item.body}</span>
-            </div>
+          <div className='markdown-body' key={item.id}>
+            <span>{item.title}</span>
+            <span>{item.createdAt}</span>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{item.body}</ReactMarkdown>
+          </div>
         ))}
       </div>
       <div className='w-1/4 flex-3 h-full px-10' >
