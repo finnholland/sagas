@@ -8,6 +8,7 @@ import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
 import {API} from './constants'
+import { getBlogAge } from './helpers';
 
 const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
@@ -96,7 +97,7 @@ export default function Home() {
         {blogs?.map((item) => ( 
           <div className='markdown-body' key={item.id}>
             <span>{item.title}</span>
-            <span>{item.createdAt}</span>
+            <span>{getBlogAge(item.createdAt)}</span>
             <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{item.body}</ReactMarkdown>
           </div>
         ))}
