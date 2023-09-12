@@ -142,3 +142,6 @@ ol {
 li {
   margin: 0px !important;
 }
+img {
+  border-radius: 20px;
+}
