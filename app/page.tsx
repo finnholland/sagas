@@ -24,7 +24,7 @@ interface PreBlog {
 }
 interface Blog {
   id: string
-  createdAt: Date
+  createdAt: string
   title: string,
   body: string,
   userId: string,
@@ -34,32 +34,30 @@ interface Blog {
 }
 
 export default function Home() {
-  const [value, setValue] = useState('');
   const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: '123abc', author: 'binn', visible: true, tags: [], saga: ''});
-  const [blogs, setBlogs] = useState<Blog>();
+  const [blogs, setBlogs] = useState<Blog[]>();
   
   function handleEditorChange({ html, text }: { html: string, text: string }) {
     if (html && text)
       setPreBlog(prev => ({ ...prev, body: text }))
   }
 
-  // useEffect(() => {
-  //   const stringy = last_evaluated_key ? JSON.stringify(last_evaluated_key) : ''
-  //   if (stringy !== '') {
-  //     Axios.get(`${API}/getBlogs`, { params: { last_evaluated_key: stringy }}).then(res => {
-  //       console.log(res.data.items)
-  //       last_evaluated_key = res.data.last_evaluated_key
-  //       console.log(last_evaluated_key)
-  //     })
-  //   } else {
-  //     Axios.get(`${API}/getBlogs`).then(res => {
-  //       console.log(res.data.items)
-  //       last_evaluated_key = res.data.last_evaluated_key
-  //       console.log(last_evaluated_key)
-  //     })
-  //   }
+  useEffect(() => {
+    Axios.get(`${API}/getBlogs`).then(res => {
+      console.log(res.data.items)
+      last_evaluated_key = res.data.last_evaluated_key
+      setBlogs(res.data.items)
+    })
+  }, [])
 
-  // }, [])
+  const nextPage = () => {
+    const stringy = last_evaluated_key ? JSON.stringify(last_evaluated_key) : ''
+    Axios.get(`${API}/getBlogs`, { params: { last_evaluated_key: stringy }}).then(res => {
+      console.log(res.data.items)
+      last_evaluated_key = res.data.last_evaluated_key
+      console.log(last_evaluated_key)
+    })
+  }
 
   const createBlog = () => {
     console.table(preBlog)
@@ -92,7 +90,14 @@ export default function Home() {
         </div>
         <input type="text" placeholder='title' onChange={(e) => setPreBlog(prev => ({...prev, title: e.target.value}))}/>
         <input type="text" placeholder='tags' onChange={(e) => setPreBlog(prev => ({...prev, tags: e.target.value.split(',')}))}/>
-        <input type="text" placeholder='saga' onChange={(e) => setPreBlog(prev => ({...prev, saga: e.target.value}))}/>
+        <input type="text" placeholder='saga' onChange={(e) => setPreBlog(prev => ({ ...prev, saga: e.target.value }))} />
+        {blogs?.map((item) => ( 
+            <div key={item.id}>
+              <span>{item.title}</span>
+              <span>{item.createdAt}</span>
+              <span>{item.body}</span>
+            </div>
+        ))}
       </div>
       <div className='w-1/4 flex-3 h-full px-10' >
         <div>
