@@ -132,3 +132,13 @@
 ul {
   list-style: inherit !important;
 }
+li.task-list-item {
+  list-style: none !important;
+  padding-left: 1px;
+}
+ol {
+  list-style: decimal !important;
+}
+li {
+  margin: 0px !important;
+}
