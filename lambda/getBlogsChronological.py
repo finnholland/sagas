@@ -1,9 +1,11 @@
 import json
 import boto3
+from boto3.dynamodb.types import TypeDeserializer
 
 dynamodb = boto3.client('dynamodb')
 tableName = 'sagas'
 indexName = 'type-createdAt-index'
+deserializer = TypeDeserializer()
 
 def lambda_handler(event, context):
     scanIndexForward = False
@@ -34,16 +36,18 @@ def lambda_handler(event, context):
                 ScanIndexForward=scanIndexForward
             )
 
-        items = response['Items']
+        items = []
+        for item in response['Items']:
+            items.append({k: deserializer.deserialize(v) for k,v in  item.items()})
         last_evaluated_key = response.get('LastEvaluatedKey')
         # Sort the items by 'createdAt' in descending order (newest first)
-        sorted_items = sorted(items, key=lambda x: x['createdAt']['S'], reverse=True)
+        sorted_items = sorted(items, key=lambda x: x['createdAt'], reverse=True)
 
         # Return the sorted items as the response
         return {
             'statusCode': response['ResponseMetadata']['HTTPStatusCode'],
             'body': json.dumps({
-                'items': items,
+                'items': sorted_items,
                 'last_evaluated_key': last_evaluated_key
             })
         }

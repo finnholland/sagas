@@ -128,3 +128,7 @@
 .rc-md-editor {
   border: none !important;
 }
+
+ul {
+  list-style: inherit !important;
+}
