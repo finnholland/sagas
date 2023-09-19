@@ -43,6 +43,17 @@ interface Blog {
   tags: string[],
   saga: string
 }
+interface User {
+  location: string,
+  bio: string
+  createdAt: string,
+  id: string,
+  name: string,
+  sagas: string[],
+  profileImageUrl: string,
+  tags: string[],
+  type: string
+}
 
 export default function Home() {
   const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: '123abc', author: 'binn', visible: true, tags: [], saga: ''});
@@ -53,6 +64,7 @@ export default function Home() {
   const [loggingIn, setLoggingIn] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], profileImageUrl: '', tags: [], type: ''})
 
   function handleEditorChange({ html, text }: { html: string, text: string }) {
     if (html && text)
@@ -62,13 +74,15 @@ export default function Home() {
 
   useEffect(() => {
     Auth.currentAuthenticatedUser().then((res) => {
-      setAuthenticated(res == undefined ? false : true)
+      if (res != undefined) {
+        getCurrentUser(res.username)
+      }
     }).finally(() => setLoaded(true))
-    // Axios.get(`${API}/getBlogs`).then(res => {
-    //   console.log(res.data.items)
-    //   last_evaluated_key = res.data.last_evaluated_key
-    //   setBlogs(res.data.items)
-    // })
+    Axios.get(`${API}/getBlogs`).then(res => {
+      console.log(res.data.items)
+      last_evaluated_key = res.data.last_evaluated_key
+      setBlogs(res.data.items)
+    })
   }, [])
 
   const nextPage = () => {
@@ -87,13 +101,22 @@ export default function Home() {
     })
   }
 
+  const getCurrentUser = (id: string) => {
+    setAuthenticated(true);
+    console.log(id)
+    Axios.get(`${API}/getCurrentUser`, {params: {id: id}}).then(res => {
+      setCurrentUser(res.data)
+      console.log(res.data)
+    })
+  }
+
   const authenticate = (login: boolean) => {
     if (login) {
       Auth.signIn(email, password).then((res) => {
-        window.location.reload()
+        getCurrentUser(res.username)
       })
     } else {
-      Auth.signOut().then(() => window.location.reload()).catch(err => console.log('error signing out: ', err))
+      Auth.signOut().then(() => setAuthenticated(false)).catch(err => console.log('error signing out: ', err))
     }
 
   }
@@ -109,7 +132,7 @@ export default function Home() {
           </div>
         </div>
         <div className='w-1/2 h-full px-20 flex flex-col'>
-          {authenticated ? <span onClick={() => setCreatingBlog(!creatingBlog)}>{creatingBlog ? 'cancel' : 'Create Blog'}</span> : (null)}
+          {authenticated && !creatingBlog ? <span onClick={() => setCreatingBlog(!creatingBlog)}>Create Blog</span> : (null)}
           {creatingBlog ? (<div>
             <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full'>
               <MdEditor
@@ -123,7 +146,7 @@ export default function Home() {
               />
             </div>
             <div className='flex-row flex justify-between mt-3'>
-              <button className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>cancel</button>
+              <button onClick={() => setCreatingBlog(false)} className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>cancel</button>
               <button onClick={() => createBlog()} disabled={preBlog.body == ''} className={`${preBlog.body == '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>post</button>
             </div>
             <input type="text" placeholder='title' onChange={(e) => setPreBlog(prev => ({ ...prev, title: e.target.value }))} />
@@ -160,25 +183,22 @@ export default function Home() {
             </div>
           </div>
           <div>
-            {authenticated ? (
-              <span className='text-blue-300 underline cursor-pointer' onClick={() => authenticate(false)}>log out</span>
-            ) : (
-                  <div>
-
-                    <span className='text-blue-300 underline cursor-pointer' onClick={() => setLoggingIn(!loggingIn)}>log in</span>
-                  {loggingIn ? (<div className='flex-col'>
-                    <input value={email} onChange={(e) => setEmail(e.target.value)} className='border-blue-300 border-2 my-3 rounded-lg px-2 w-full'/>
-                    <input value={password} onChange={(e) => setPassword(e.target.value)} className='border-blue-300 border-2 rounded-lg px-2 w-full' />
-                    
+            {authenticated ? (<span className='text-sky-500 underline cursor-pointer' onClick={() => authenticate(false)}>log out</span>) : (
+              <div>
+                <span className='text-sky-500 underline cursor-pointer' onClick={() => setLoggingIn(!loggingIn)}>log in</span>
+                {loggingIn ? (
+                  <div className='flex-col'>
+                    <input value={email} onChange={(e) => setEmail(e.target.value)} className='border-sky-500 border-2 my-3 rounded-lg px-2 w-full'/>
+                    <input value={password} type='password' onChange={(e) => setPassword(e.target.value)} className='border-sky-500 border-2 rounded-lg px-2 w-full' />
                     <div className='flex-row flex w-full justify-between'>
                       <span className='cursor-pointer' onClick={() => { setLoggingIn(false); setEmail('');  setPassword('')}}>cancel</span>
                       <span className='cursor-pointer' onClick={() => authenticate(true)}>confirm</span>
                     </div>
-                    </div>) : (<div></div>)}
                   </div>
+                ) : (<div></div>)}
+              </div>
             )}
           </div>
-
         </div>
       </div>
     )
