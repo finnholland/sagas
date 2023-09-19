@@ -56,7 +56,8 @@ interface User {
 }
 
 export default function Home() {
-  const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: '123abc', author: 'binn', visible: true, tags: [], saga: ''});
+  const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], profileImageUrl: '', tags: [], type: ''})
+  const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: currentUser.id, author: currentUser.name, visible: true, tags: [], saga: ''});
   const [blogs, setBlogs] = useState<Blog[]>();
   const [authenticated, setAuthenticated] = useState(false)
   const [loaded, setLoaded] = useState(false)
@@ -64,7 +65,6 @@ export default function Home() {
   const [loggingIn, setLoggingIn] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], profileImageUrl: '', tags: [], type: ''})
 
   function handleEditorChange({ html, text }: { html: string, text: string }) {
     if (html && text)
@@ -79,7 +79,6 @@ export default function Home() {
       }
     }).finally(() => setLoaded(true))
     Axios.get(`${API}/getBlogs`).then(res => {
-      console.log(res.data.items)
       last_evaluated_key = res.data.last_evaluated_key
       setBlogs(res.data.items)
     })
@@ -88,25 +87,22 @@ export default function Home() {
   const nextPage = () => {
     const stringy = last_evaluated_key ? JSON.stringify(last_evaluated_key) : ''
     Axios.get(`${API}/getBlogs`, { params: { last_evaluated_key: stringy }}).then(res => {
-      console.log(res.data.items)
       last_evaluated_key = res.data.last_evaluated_key
-      console.log(last_evaluated_key)
     })
   }
 
   const createBlog = () => {
     console.table(preBlog)
-    Axios.post(`${API}/createBlog`, preBlog ).then(res => {
-      console.log(res)
+    Axios.post(`${API}/createBlog`, preBlog).then(res => {
+      setPreBlog({ title: '', body: '', userId: currentUser.id, author: currentUser.name, visible: true, tags: [], saga: '' });
+      setCreatingBlog(false);
     })
   }
 
   const getCurrentUser = (id: string) => {
     setAuthenticated(true);
-    console.log(id)
     Axios.get(`${API}/getCurrentUser`, {params: {id: id}}).then(res => {
       setCurrentUser(res.data)
-      console.log(res.data)
     })
   }
 
@@ -118,7 +114,6 @@ export default function Home() {
     } else {
       Auth.signOut().then(() => setAuthenticated(false)).catch(err => console.log('error signing out: ', err))
     }
-
   }
 
   if (!loaded) {
@@ -131,8 +126,8 @@ export default function Home() {
 
           </div>
         </div>
-        <div className='w-1/2 h-full px-20 flex flex-col'>
-          {authenticated && !creatingBlog ? <span onClick={() => setCreatingBlog(!creatingBlog)}>Create Blog</span> : (null)}
+        <div className='w-1/2 h-full px-20 flex flex-col pb-10'>
+
           {creatingBlog ? (<div>
             <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full'>
               <MdEditor
@@ -154,18 +149,14 @@ export default function Home() {
             <input type="text" placeholder='saga' onChange={(e) => setPreBlog(prev => ({ ...prev, saga: e.target.value }))} />
           </div>) : (null)}
           {blogs?.map((item) => (
-            <div className='markdown-body' key={item.id}>
-              <span>{item.title}</span>
-              <span>{getBlogAge(item.createdAt)}</span>
-              <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{item.body}</ReactMarkdown>
-            </div>
+            <BlogItem key={item.id} blog={item}/>
           ))}
         </div>
         <div className='w-1/4 flex-3 h-full px-10 justify-between flex flex-col' >
           <div>
             <div className='flex flex-row mb-5'>
               <div>
-                <Image className='rounded-2xl' src='/profile.jpg' alt='profile' width={100} height={100} />
+                <Image className='rounded-2xl m-0' src='/profile.jpg' alt='profile' width={100} height={100} />
               </div>
               <div className='flex flex-col ml-3 flex-1 justify-center'>
                 <div className='justify-between flex-row flex items-center'>
@@ -175,12 +166,18 @@ export default function Home() {
                 <span className='font-light text-xs mt-2'>Welcome to my blog, here I post whatever I feel like but mostly just projects im working on :)</span>
               </div>
             </div>
-            <div className=' bg-neutral-200 w-full h-64 rounded-2xl'>
-              <span>Sagas</span>
+            <div className='mb-5'>
+              {authenticated ? <span className='cursor-pointer select-none' onClick={() => setCreatingBlog(!creatingBlog)}>{creatingBlog ? 'Cancel' : 'Create Blog'}</span> : (null)}
             </div>
-            <div className=' bg-neutral-200 w-full h-64 rounded-2xl'>
-              <span>Categories</span>
+            <div className='mt-2'>
+              <div className=' bg-neutral-200 w-full h-64 rounded-2xl'>
+                <span>Sagas</span>
+              </div>
+              <div className=' bg-neutral-200 w-full h-64 rounded-2xl'>
+                <span>Categories</span>
+              </div>
             </div>
+
           </div>
           <div>
             {authenticated ? (<span className='text-sky-500 underline cursor-pointer' onClick={() => authenticate(false)}>log out</span>) : (
@@ -203,4 +200,18 @@ export default function Home() {
       </div>
     )
   }
+}
+
+interface BlogProps {
+  blog: Blog
+}
+
+const BlogItem: React.FC<BlogProps> = ({blog}) => {
+  return (
+    <div className='flex-col flex mb-20'>
+      <span className='text-xl font-semibold'>{blog.title}</span>
+      <span className='text-sm mt-1 mb-3'>{getBlogAge(blog.createdAt)}</span>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>
+    </div>
+  )
 }

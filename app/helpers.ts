@@ -27,6 +27,5 @@ export const getBlogAge = (createdAt: string) => {
   } else {
     ageString = 'just now'
   }
-  console.log(end, MINUTE, HOUR, DAY, WEEK, MONTH, YEAR)
   return moment(createdAt).format("YYYY/MM/DD") + ' - ' +ageString;
 }

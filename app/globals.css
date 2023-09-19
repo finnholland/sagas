@@ -134,7 +134,8 @@ ul {
 }
 li.task-list-item {
   list-style: none !important;
-  padding-left: 1px;
+  margin: 0 .2em .25em -1.2em !important;
+  vertical-align: middle;
 }
 ol {
   list-style: decimal !important;
@@ -144,4 +145,14 @@ li {
 }
 img {
   border-radius: 20px;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+a {
+  color: #7dd3fc;
+}
+a:hover {
+  color: #7dd3fc;
+  text-decoration: underline;
 }
