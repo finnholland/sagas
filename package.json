@@ -15,6 +15,7 @@
     "@types/react-dom": "18.2.7",
     "@uiw/react-md-editor": "^3.23.5",
     "autoprefixer": "10.4.15",
+    "aws-amplify": "^5.3.11",
     "axios": "^1.5.0",
     "eslint": "8.48.0",
     "eslint-config-next": "13.4.19",
@@ -30,5 +31,9 @@
     "remark-gfm": "^3.0.1",
     "tailwindcss": "3.3.3",
     "typescript": "5.2.2"
+  },
+  "devDependencies": {
+    "aws-crt": "^1.18.0",
+    "encoding": "^0.1.13"
   }
 }
