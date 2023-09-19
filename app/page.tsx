@@ -57,6 +57,7 @@ interface User {
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], profileImageUrl: '', tags: [], type: ''})
+  const [pageAuthor, setPageAuthor] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], profileImageUrl: '', tags: [], type: ''})
   const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: currentUser.id, author: currentUser.name, visible: true, tags: [], saga: ''});
   const [blogs, setBlogs] = useState<Blog[]>();
   const [authenticated, setAuthenticated] = useState(false)
@@ -81,7 +82,10 @@ export default function Home() {
     Axios.get(`${API}/getBlogs`).then(res => {
       last_evaluated_key = res.data.last_evaluated_key
       setBlogs(res.data.items)
-    })
+    });
+    Axios.get(`${API}/getPageAuthor`).then(res => {
+      setPageAuthor(res.data)
+    });
   }, [])
 
   const nextPage = () => {
@@ -92,11 +96,25 @@ export default function Home() {
   }
 
   const createBlog = () => {
-    console.table(preBlog)
-    Axios.post(`${API}/createBlog`, preBlog).then(res => {
-      setPreBlog({ title: '', body: '', userId: currentUser.id, author: currentUser.name, visible: true, tags: [], saga: '' });
-      setCreatingBlog(false);
+    let saga = ''
+    let tags: string[] = []
+    if (!currentUser.sagas || currentUser.sagas.length == 0 || !currentUser.sagas.filter(saga => saga.toLowerCase() == preBlog.saga.toLowerCase())) {
+      saga = preBlog.saga;
+    }
+    preBlog.tags.some(tag => {
+      currentUser.tags.indexOf(tag.toLowerCase()) == -1
+      tags.push(tag)
+      console.log(tag)
     })
+
+
+    console.log(tags)
+    console.log(saga)
+    console.table(preBlog)
+    // Axios.post(`${API}/createBlog`, { blog: preBlog, saga: saga, tags: tags }).then(res => {
+    //   setPreBlog({ title: '', body: '', userId: currentUser.id, author: currentUser.name, visible: true, tags: [], saga: '' });
+    //   setCreatingBlog(false);
+    // })
   }
 
   const getCurrentUser = (id: string) => {
@@ -160,21 +178,31 @@ export default function Home() {
               </div>
               <div className='flex flex-col ml-3 flex-1 justify-center'>
                 <div className='justify-between flex-row flex items-center'>
-                  <span className='text-xl font-bold'>Binn Hoola</span>
-                  <span className='text-xs'>Australia - VIC</span>
+                  <span className='text-xl font-bold'>{pageAuthor.name}</span>
+                  <span className='text-xs'>{pageAuthor.location}</span>
                 </div>
-                <span className='font-light text-xs mt-2'>Welcome to my blog, here I post whatever I feel like but mostly just projects im working on :)</span>
+                <span className='font-light text-xs mt-2'>{pageAuthor.bio}</span>
               </div>
             </div>
             <div className='mb-5'>
-              {authenticated ? <span className='cursor-pointer select-none' onClick={() => setCreatingBlog(!creatingBlog)}>{creatingBlog ? 'Cancel' : 'Create Blog'}</span> : (null)}
+              {authenticated ? <span className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold cursor-pointer select-none' onClick={() => setCreatingBlog(!creatingBlog)}>{creatingBlog ? 'Cancel' : 'Create Blog'}</span> : (null)}
             </div>
             <div className='mt-2'>
-              <div className=' bg-neutral-200 w-full h-64 rounded-2xl'>
+              <div className=' bg-neutral-200 w-full h-64 rounded-2xl flex-col flex'>
                 <span>Sagas</span>
+                {pageAuthor.sagas.map((saga) => {
+                  return (
+                    <span key={saga}>{saga}</span>
+                  )
+                })}
               </div>
-              <div className=' bg-neutral-200 w-full h-64 rounded-2xl'>
+              <div className=' bg-neutral-200 w-full h-64 rounded-2xl flex-col flex'>
                 <span>Categories</span>
+                  {pageAuthor.tags.map((tag) => {
+                    return (
+                      <span key={tag}>{tag}</span>
+                    )
+                  })}
               </div>
             </div>
 
