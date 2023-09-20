@@ -4,4 +4,9 @@ const userPool = {
   "USER_POOL_APP_CLIENT_ID": "3gji2smv1udmuraqqvvuoipr5j"
 }
 const API = 'https://6ybnxhezk9.execute-api.ap-southeast-2.amazonaws.com/default'
-export {API, userPool}
+
+const DATE_TYPE = {
+  BLOG: 'BLOG',
+  SAGA: 'SAGA',
+}
+export { API, userPool, DATE_TYPE }
