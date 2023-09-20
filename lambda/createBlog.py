@@ -3,38 +3,77 @@ import json
 import uuid
 import datetime
 
-client = boto3.resource('dynamodb').Table('sagas')
-type = 'blog'
+tableName="sagas"
+client = boto3.resource("dynamodb")
+table = client.Table(tableName)
+type = "blog"
+
 
 def lambda_handler(event, context):
-    createdAt = datetime.datetime.now().isoformat()
-    dateId = datetime.datetime.now().replace(microsecond=0).isoformat()
+    print(event)
+    createdAt = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()
     unique_id = str(uuid.uuid4())
-    body = json.loads(event['body'])
+    body = json.loads(event["body"])
+    # body = event
+    id  = type + "-" + unique_id + "-" + createdAt
+    lowerTags = [t.lower() for t in body["userTags"]]
+    newSagas = []
+    for saga in body['userSagas']:
+        tempSaga = saga['saga']
+        tempUpdated = saga['updated']
 
-    response = client.put_item(
-    TableName='sagas',
+        if saga['saga'] == body["saga"] and saga['updated'] == "":
+            tempUpdated = createdAt
+        newSagas.append({"saga": tempSaga, "updated": tempUpdated})
+
+    response = table.put_item(
+        TableName=tableName,
         Item={
-            'id': type+'-'+unique_id+'-'+dateId,
-            'createdAt': createdAt,
-            'type': type,
-            'title': body['title'],
-            'body': body['body'],
-            'author': body['author'],
-            'visible': body['visible'],
-            'tags': body['tags'],
-            'saga': body['saga']
+            "id": id,
+            "createdAt": createdAt,
+            "type": type,
+            "title": body["title"],
+            "body": body["body"],
+            "userId": body["userId"],
+            "author": body["author"],
+            "visible": body["visible"],
+            "tags": lowerTags,
+            "saga": body["saga"].lower(),
+        },
+    )
+
+    if body['userTags'] != []:
+        response = table.update_item(
+            TableName=tableName,
+            Key={
+                'id': body["userId"],
+                'createdAt': '2023-09-20T00:24:45+00:00'
+            },
+            UpdateExpression="SET tags = :newTags",
+            ExpressionAttributeValues={
+                ':newTags': lowerTags
+            }
+        )
+
+    sagaResponse = table.update_item(
+        TableName=tableName,
+        Key={
+            'id': body["userId"],
+            'createdAt': '2023-09-20T00:24:45+00:00'
+        },
+        UpdateExpression="SET sagas = :newSagas",
+        ExpressionAttributeValues={
+            ':newSagas': newSagas
         }
     )
     
     responseBody = {
-        'message': 'Blog ' + body['title'] + ' added with id: ' + unique_id,
-        'input': event
-    };
+        "message": "Blog added with id: " + id,
+    }
 
     response = {
-        'statusCode': response['ResponseMetadata']['HTTPStatusCode'],
-        'body': json.dumps(responseBody)
-    };
+        "statusCode": response["ResponseMetadata"]["HTTPStatusCode"],
+        "body": json.dumps(responseBody),
+    }
 
-    return response;
+    return response

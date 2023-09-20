@@ -7,8 +7,8 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
-import {API} from './constants'
-import { getBlogAge } from './helpers';
+import {API, DATE_TYPE} from './constants'
+import { getDateAge } from './helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
 Amplify.configure({
@@ -49,15 +49,21 @@ interface User {
   createdAt: string,
   id: string,
   name: string,
-  sagas: string[],
-  profileImageUrl: string,
+  sagas: Saga[],
   tags: string[],
   type: string
 }
 
+interface Saga {
+  saga: string,
+  updated: string
+}
+
+
+
 export default function Home() {
-  const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], profileImageUrl: '', tags: [], type: ''})
-  const [pageAuthor, setPageAuthor] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], profileImageUrl: '', tags: [], type: ''})
+  const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: ''})
+  const [pageAuthor, setPageAuthor] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: ''})
   const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: currentUser.id, author: currentUser.name, visible: true, tags: [], saga: ''});
   const [blogs, setBlogs] = useState<Blog[]>();
   const [authenticated, setAuthenticated] = useState(false)
@@ -96,31 +102,31 @@ export default function Home() {
   }
 
   const createBlog = () => {
-    let saga = ''
-    let tags: string[] = []
-    if (!currentUser.sagas || currentUser.sagas.length == 0 || !currentUser.sagas.filter(saga => saga.toLowerCase() == preBlog.saga.toLowerCase())) {
-      saga = preBlog.saga;
+    let newSagas = currentUser.sagas || [];
+    console.log(currentUser.sagas)
+    const index = newSagas.findIndex(t => t.saga.toLowerCase() === preBlog.saga.toLowerCase());
+    if (newSagas.length != 0 && index === -1) {
+        newSagas.push({saga: preBlog.saga, updated: ''})
+    } else {
+      newSagas[index].updated = '';
     }
-    preBlog.tags.some(tag => {
-      currentUser.tags.indexOf(tag.toLowerCase()) == -1
-      tags.push(tag)
-      console.log(tag)
+    
+    let combinedTags = Array.from(new Set(currentUser.tags.concat(preBlog.tags)));
+    if (combinedTags === currentUser.tags) {
+      combinedTags = []
+    }
+
+    Axios.post(`${API}/createBlog`, { ...preBlog, userTags: combinedTags, userSagas: newSagas, createdAt: currentUser.createdAt }).then(res => {
+      setPreBlog({ title: '', body: '', userId: currentUser.id, author: currentUser.name, visible: true, tags: [], saga: '' });
+      setCreatingBlog(false);
     })
-
-
-    console.log(tags)
-    console.log(saga)
-    console.table(preBlog)
-    // Axios.post(`${API}/createBlog`, { blog: preBlog, saga: saga, tags: tags }).then(res => {
-    //   setPreBlog({ title: '', body: '', userId: currentUser.id, author: currentUser.name, visible: true, tags: [], saga: '' });
-    //   setCreatingBlog(false);
-    // })
   }
 
   const getCurrentUser = (id: string) => {
     setAuthenticated(true);
     Axios.get(`${API}/getCurrentUser`, {params: {id: id}}).then(res => {
       setCurrentUser(res.data)
+      console.log(res.data?.sagas)
     })
   }
 
@@ -185,20 +191,24 @@ export default function Home() {
               </div>
             </div>
             <div className='mb-5'>
-              {authenticated ? <span className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold cursor-pointer select-none' onClick={() => setCreatingBlog(!creatingBlog)}>{creatingBlog ? 'Cancel' : 'Create Blog'}</span> : (null)}
+              {authenticated ? <span className='bg-sky-300 flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold cursor-pointer select-none' onClick={() => setCreatingBlog(!creatingBlog)}>{creatingBlog ? 'Cancel' : 'Create Blog'}</span> : (null)}
             </div>
             <div className='mt-2'>
               <div className=' bg-neutral-200 w-full h-64 rounded-2xl flex-col flex'>
                 <span>Sagas</span>
-                {pageAuthor.sagas.map((saga) => {
+                {pageAuthor?.sagas?.map((saga) => {
                   return (
-                    <span key={saga}>{saga}</span>
+                    <div key={saga.saga}>
+                      <span>{saga.saga}</span>
+                      <span> - </span>
+                      <span>{getDateAge(saga.updated,DATE_TYPE.SAGA)}</span>
+                    </div>
                   )
                 })}
               </div>
               <div className=' bg-neutral-200 w-full h-64 rounded-2xl flex-col flex'>
                 <span>Categories</span>
-                  {pageAuthor.tags.map((tag) => {
+                  {pageAuthor?.tags?.map((tag) => {
                     return (
                       <span key={tag}>{tag}</span>
                     )
@@ -238,7 +248,7 @@ const BlogItem: React.FC<BlogProps> = ({blog}) => {
   return (
     <div className='flex-col flex mb-20'>
       <span className='text-xl font-semibold'>{blog.title}</span>
-      <span className='text-sm mt-1 mb-3'>{getBlogAge(blog.createdAt)}</span>
+      <span className='text-sm mt-1 mb-3'>{getDateAge(blog.createdAt, DATE_TYPE.BLOG)}</span>
       <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>
     </div>
   )
