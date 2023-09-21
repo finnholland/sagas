@@ -156,3 +156,7 @@ a:hover {
   color: #7dd3fc;
   text-decoration: underline;
 }
+img {
+  display: block;
+  margin: auto;
+}
