@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useRef, useState } from 'react';
+import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
 import Image from 'next/image'
 import "react-markdown-editor-lite/lib/index.css";
 import dynamic from 'next/dynamic';
@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
 import {API, DATE_TYPE} from './constants'
-import { getDateAge } from './helpers';
+import { getDateAge, uploadFile } from './helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
 Amplify.configure({
@@ -79,19 +79,51 @@ export default function Home() {
   }
 
 
+  const ref = useRef<HTMLInputElement>(null);
+  const handleClick = () => {
+    console.log('dhrh')
+    if (ref.current) {
+      ref.current.click();
+    }
+  }
+  
+  const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
+
+    if (e.target.files && e.target.files.length > 0) {
+      console.log(e.target)
+      uploadFile('images/'+e.target.files[0].name, e.target.files[0]).then(res => console.log(res))
+    }
+  }
+  const handleImageUpload = () => {
+
+    handleClick()
+
+  }
+
+  const handleImageUpload2 = (file: File) => {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = data => {
+        resolve(data.target?.result);
+      };
+      reader.readAsDataURL(file);
+    });
+    return 'test'
+  };
+
   useEffect(() => {
     Auth.currentAuthenticatedUser().then((res) => {
       if (res != undefined) {
         getCurrentUser(res.username)
       }
     }).finally(() => setLoaded(true))
-    Axios.get(`${API}/getBlogs`).then(res => {
-      last_evaluated_key = res.data.last_evaluated_key
-      setBlogs(res.data.items)
-    });
-    Axios.get(`${API}/getPageAuthor`).then(res => {
-      setPageAuthor(res.data)
-    });
+    // Axios.get(`${API}/getBlogs`).then(res => {
+    //   last_evaluated_key = res.data.last_evaluated_key
+    //   setBlogs(res.data.items)
+    // });
+    // Axios.get(`${API}/getPageAuthor`).then(res => {
+    //   setPageAuthor(res.data)
+    // });
   }, [])
 
   const nextPage = () => {
@@ -155,6 +187,8 @@ export default function Home() {
           {creatingBlog ? (<div>
             <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full'>
               <MdEditor
+                allowPasteImage
+                onImageUpload={handleImageUpload2}
                 view={{ menu: true, html: false, md: true }}
                 canView={{ menu: true, html: true, both: false, fullScreen: false, hideMenu: false, md: true }}
                 placeholder='blog loblaw'
@@ -235,6 +269,7 @@ export default function Home() {
             )}
           </div>
         </div>
+        <input ref={ref} type={'file'} accept="image/png, image/jpeg" name="file" onChange={uploadImage} hidden/>
       </div>
     )
   }
