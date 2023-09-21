@@ -8,9 +8,11 @@ import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
 import {API, DATE_TYPE} from './constants'
-import { getDateAge, uploadFile } from './helpers';
+import { dataURLtoFile, getDateAge, uploadFile } from './helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
+import { v4 as uuidv4 } from 'uuid';
+
 Amplify.configure({
   Auth: {
     region: userPool.REGION,
@@ -78,37 +80,20 @@ export default function Home() {
       setPreBlog(prev => ({ ...prev, body: text }))
   }
 
-
-  const ref = useRef<HTMLInputElement>(null);
-  const handleClick = () => {
-    console.log('dhrh')
-    if (ref.current) {
-      ref.current.click();
-    }
-  }
-  
-  const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
-
-    if (e.target.files && e.target.files.length > 0) {
-      console.log(e.target)
-      uploadFile('images/'+e.target.files[0].name, e.target.files[0]).then(res => console.log(res))
-    }
-  }
-  const handleImageUpload = () => {
-
-    handleClick()
-
-  }
-
-  const handleImageUpload2 = (file: File) => {
+  const handleImageUpload = (file: File) => {
+    let uuid = uuidv4();
     return new Promise(resolve => {
       const reader = new FileReader();
       reader.onload = data => {
-        resolve(data.target?.result);
+        if (data.target && data.target.result) {
+          console.log(data.target.result)
+          if (typeof data.target.result === 'string') {
+            uploadFile('images/'+uuid, dataURLtoFile(data.target.result, 'images/'+uuid)).then(res => resolve(res))
+          }
+        }
       };
       reader.readAsDataURL(file);
     });
-    return 'test'
   };
 
   useEffect(() => {
@@ -188,7 +173,7 @@ export default function Home() {
             <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full'>
               <MdEditor
                 allowPasteImage
-                onImageUpload={handleImageUpload2}
+                onImageUpload={handleImageUpload}
                 view={{ menu: true, html: false, md: true }}
                 canView={{ menu: true, html: true, both: false, fullScreen: false, hideMenu: false, md: true }}
                 placeholder='blog loblaw'
@@ -269,7 +254,6 @@ export default function Home() {
             )}
           </div>
         </div>
-        <input ref={ref} type={'file'} accept="image/png, image/jpeg" name="file" onChange={uploadImage} hidden/>
       </div>
     )
   }

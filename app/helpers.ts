@@ -1,6 +1,7 @@
 import moment from "moment";
-import { DATE_TYPE } from "./constants";
+import { DATE_TYPE, S3_URL } from "./constants";
 import AWS from 'aws-sdk';
+import { ACCESS_KEY_ID, SECRET_ACCESS_KEY } from "./secrets";
 
 export const getDateAge = (createdAt: string, type: string) => {
   const now = moment(new Date()).utcOffset('+0000'); //todays date
@@ -42,8 +43,8 @@ export const uploadFile = async (name: string, body: File) => {
   const REGION = "ap-southeast-2";
 
   AWS.config.update({
-    accessKeyId: "",
-    secretAccessKey: "",
+    accessKeyId: process.env.REACT_APP_ACCESS_KEY || ACCESS_KEY_ID,
+    secretAccessKey: process.env.REACT_APP_SECRET_KEY || SECRET_ACCESS_KEY,
   });
   const s3 = new AWS.S3({
     params: { Bucket: S3_BUCKET },
@@ -68,11 +69,23 @@ export const uploadFile = async (name: string, body: File) => {
 
   await upload.then((err) => {
     console.log(err);
-    alert("File uploaded successfully.");
   });
 
-  return s3.getSignedUrl('getObject', {
-    Bucket: 'sagas',
-    Key: name,
-  });
+  return S3_URL + name
 };
+
+export const dataURLtoFile = (dataurl: string, filename: string) => {
+  const arr = dataurl.split(',');
+  const mimeGroup = arr[0].match(/data:(.*?);/);
+  let mime = '';
+  if (mimeGroup && mimeGroup[1])
+    mime = mimeGroup[1];
+  const bstr = atob(arr[arr.length - 1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+}
