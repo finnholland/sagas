@@ -1,5 +1,5 @@
 'use client'
-import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
+import React, { ChangeEvent, Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import Image from 'next/image'
 import "react-markdown-editor-lite/lib/index.css";
 import dynamic from 'next/dynamic';
@@ -8,10 +8,15 @@ import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
 import {API, DATE_TYPE} from './constants'
-import { dataURLtoFile, getDateAge, isEmpty, uploadFile } from './helpers';
+import { dataURLtoFile, getDateAge, isEmpty, sortSagaFilters, sortTagFilters, uploadFile } from './helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
 import { v4 as uuidv4 } from 'uuid';
+import ArrowLeft from './assets/ArrowLeft';
+import ArrowRight from './assets/ArrowRight';
+import Plus from './assets/Plus';
+import Remove from './assets/Remove';
+import { Saga, User, PreBlog, Blog } from './types';
 
 Amplify.configure({
   Auth: {
@@ -26,39 +31,6 @@ const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
 });
 let last_evaluated_key =  ''
 
-interface PreBlog {
-  title: string,
-  body: string,
-  userId: string,
-  author: string,
-  tags: string[],
-  saga: string
-}
-interface Blog {
-  id: string
-  createdAt: string
-  title: string,
-  body: string,
-  userId: string,
-  visible: boolean,
-  tags: string[],
-  saga: string
-}
-interface User {
-  location: string,
-  bio: string
-  createdAt: string,
-  id: string,
-  name: string,
-  sagas: Saga[],
-  tags: string[],
-  type: string
-}
-
-interface Saga {
-  saga: string,
-  updated: string
-}
 
 
 const PAGE_SIZE = 5
@@ -80,6 +52,8 @@ export default function Home() {
   const [pageSagas, setPageSagas] = useState<Saga[]>([]);
   const [pageTags, setPageTags] = useState<string[]>([]);
   const [pageNumber, setPageNumber] = useState({tagPage: 1, sagaPage: 1})
+  const [filterSaga, setFilterSaga] = useState('')
+  const [filterTags, setFilterTags] = useState<string[]>([])
 
   function handleEditorChange({ html, text }: { html: string, text: string }) {
     if (html && text)
@@ -102,8 +76,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    setPageTags(pageTags.slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
-    tagsLength = Math.ceil(pageTags.length/PAGE_SIZE)
     Auth.currentAuthenticatedUser().then((res) => {
       if (res != undefined) {
         getCurrentUser(res.username)
@@ -115,8 +87,8 @@ export default function Home() {
     });
     Axios.get(`${API}/getPageAuthor`).then(res => {
       setPageAuthor(res.data)
-      setPageTags(res.data.tags.slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
-      setPageSagas(res.data.sagas.slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
+      setPageTags(sortTagFilters(res.data.tags).slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
+      setPageSagas(sortSagaFilters(res.data.sagas).slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
       tagsLength = Math.ceil(res.data.tags.length/PAGE_SIZE);
       sagasLength = Math.ceil(res.data.sagas.length/PAGE_SIZE);
     });
@@ -242,35 +214,40 @@ export default function Home() {
               {authenticated ? <span className='bg-sky-300 flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold cursor-pointer select-none' onClick={() => setCreatingBlog(!creatingBlog)}>{creatingBlog ? 'Cancel' : 'Create Blog'}</span> : (null)}
             </div>
             <div className='mt-2'>
-              <div className=' bg-neutral-200 w-full h-64 rounded-2xl flex-col flex'>
-                <span>Sagas</span>
-                {pageSagas.map((saga) => {
-                  return (
-                    <div key={saga.saga}>
-                      <span>{saga.saga}</span>
-                      <span> - </span>
-                      <span>{getDateAge(saga.updated,DATE_TYPE.SAGA)}</span>
-                    </div>
-                  )
-                })}
-                <div className='flex-row flex w-full justify-between'>
-                  <span onClick={() => incrementPage('sagas', -1)}>prev page</span>
+              <div className={`bg-neutral-100 w-full rounded-2xl flex-col flex items-center justify-between pb-4 mb-8 ${sagasLength > 1 ? 'h-72' : ''}`}>
+                <div className='justify-between w-full items-center flex flex-col px-5'>
+                  <div className='border-b-2 border-b-white w-full py-3 flex mb-3'>
+                    <span className='font-bold text-sky-300'>Sagas</span>
+                  </div>
+                  
+                  <div className='px-3 w-full'>
+                    {sortSagaFilters(pageSagas).map((saga) => (
+                      <SagaFilter key={saga.saga} name={saga.saga} updated={saga.updated} filterSaga={filterSaga} setFilterSaga={setFilterSaga} />
+                    ))}
+                  </div>
+                </div>
+                <div className='flex-row flex w-1/3 justify-between items-center'>
+                  <ArrowLeft onClick={() => incrementPage('sagas', -1)} height={25}/>
                   <span>{pageNumber.sagaPage} of {sagasLength}</span>
-                  <span onClick={() => incrementPage('sagas', 1)}>next page</span>
+                  <ArrowRight onClick={() => incrementPage('sagas', 1)} height={25}/>
                 </div>
 
               </div>
-              <div className=' bg-neutral-200 w-full h-64 rounded-2xl flex-col flex'>
-                <span>Categories</span>
-                  {pageTags.map((tag) => {
-                    return (
-                      <span key={tag}>{tag}</span>
-                    )
-                  })}
-                <div className='flex-row flex w-full justify-between'>
-                  <span onClick={() => incrementPage('tags', -1)}>prev page</span>
+              <div className={`bg-neutral-100 w-full rounded-2xl flex-col flex items-center justify-between pb-4 ${tagsLength > 1 ? 'h-72' : ''}`}>
+                <div className='justify-between w-full items-center flex flex-col px-5'>
+                  <div className='border-b-2 border-b-white w-full py-3 flex mb-3'>
+                    <span onClick={() => console.log(sortSagaFilters(pageAuthor.sagas))} className='font-bold text-sky-300'>Tags</span>
+                  </div>
+                  <div className='px-3 w-full'>
+                    {sortTagFilters(pageTags).map((tag) => (
+                      <TagFilter key={tag} name={tag} filterTags={filterTags} setFilterTags={setFilterTags}/>
+                    ))}
+                  </div>
+                </div>
+                <div className='flex-row flex w-1/3 justify-between items-center'>
+                  <ArrowLeft onClick={() => incrementPage('tags', -1)} height={25}/>
                   <span>{pageNumber.tagPage} of {tagsLength}</span>
-                  <span onClick={() => incrementPage('tags', 1)}>next page</span>
+                  <ArrowRight onClick={() => incrementPage('tags', 1)} height={25}/>
                 </div>
 
               </div>
@@ -313,3 +290,49 @@ const BlogItem: React.FC<BlogProps> = ({blog}) => {
     </div>
   )
 }
+
+interface SagaProps {
+  name: string,
+  updated: string,
+  filterSaga: string
+  setFilterSaga: Dispatch<SetStateAction<string>>
+}
+const SagaFilter: React.FC<SagaProps> = ({ name, updated, filterSaga, setFilterSaga }) => {
+  const toggleFilter = () => {
+    
+    if (filterSaga === name) {
+      setFilterSaga('')
+    } else {
+      setFilterSaga(name)
+    }
+  }
+  return (
+    <div onClick={() => toggleFilter()} className='flex-row flex w-full justify-between my-2 cursor-pointer'>
+      <span className={`font-medium ${filterSaga===name ? 'text-sky-300' : ''}`}>{name}</span>
+      <span className={`font-medium ${filterSaga===name ? 'text-sky-300' : ''}`}>{getDateAge(updated,DATE_TYPE.SAGA)}</span>
+    </div>
+  )
+}
+
+interface TagProps {
+  name: string,
+  filterTags: string[]
+  setFilterTags: Dispatch<SetStateAction<string[]>>
+}
+const TagFilter: React.FC<TagProps> = ({ name, filterTags, setFilterTags }) => {
+  const toggleFilter = () => {
+    const index = filterTags.indexOf(name);
+    if (index >= 0) {
+      setFilterTags(filterTags.filter(f => f !== name))
+    } else {
+      setFilterTags([...filterTags, name])
+    }
+  }
+  return (
+    <div onClick={() => toggleFilter()} className='flex-row flex w-full justify-between my-2 cursor-pointer'>
+      <span className={`font-medium ${filterTags.includes(name) ? 'text-sky-300' : ''}`}>{name}</span>
+      {filterTags.includes(name) ? <Remove width={15} /> : <Plus width={15} />}
+    </div>
+  )
+}
+
