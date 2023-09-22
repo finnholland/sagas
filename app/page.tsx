@@ -236,7 +236,7 @@ export default function Home() {
               <div className={`bg-neutral-100 w-full rounded-2xl flex-col flex items-center justify-between pb-4 ${tagsLength > 1 ? 'h-72' : ''}`}>
                 <div className='justify-between w-full items-center flex flex-col px-5'>
                   <div className='border-b-2 border-b-white w-full py-3 flex mb-3'>
-                    <span onClick={() => console.log(sortSagaFilters(pageAuthor.sagas))} className='font-bold text-sky-300'>Tags</span>
+                    <span className='font-bold text-sky-300'>Tags</span>
                   </div>
                   <div className='px-3 w-full'>
                     {sortTagFilters(pageTags).map((tag) => (
