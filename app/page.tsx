@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
-import {API, DATE_TYPE} from './constants'
+import {API, DATE_TYPE, S3_URL} from './constants'
 import { dataURLtoFile, getDateAge, isEmpty, sortSagaFilters, sortTagFilters, uploadFile } from './helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
@@ -16,7 +16,7 @@ import ArrowLeft from './assets/ArrowLeft';
 import ArrowRight from './assets/ArrowRight';
 import Plus from './assets/Plus';
 import Remove from './assets/Remove';
-import { Saga, User, PreBlog, Blog } from './types';
+import { Saga, User, PreBlog, Blog, FilterBlog } from './types';
 
 Amplify.configure({
   Auth: {
@@ -54,6 +54,7 @@ export default function Home() {
   const [pageNumber, setPageNumber] = useState({tagPage: 1, sagaPage: 1})
   const [filterSaga, setFilterSaga] = useState('')
   const [filterTags, setFilterTags] = useState<string[]>([])
+  const [filterBlog, setFilterBlog] = useState<Blog>({id: '', createdAt: '', title: '', body: '', userId: currentUser.id, author: currentUser.name, tags: filterTags, saga: filterSaga, visible: true, });
 
   function handleEditorChange({ html, text }: { html: string, text: string }) {
     if (html && text)
@@ -90,7 +91,7 @@ export default function Home() {
       setPageTags(sortTagFilters(res.data.tags).slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
       setPageSagas(sortSagaFilters(res.data.sagas).slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
       tagsLength = Math.ceil(res.data.tags.length/PAGE_SIZE);
-      sagasLength = Math.ceil(res.data.sagas.length/PAGE_SIZE);
+      sagasLength = Math.ceil(res.data.sagas.length / PAGE_SIZE);
     });
   }, [])
 
@@ -138,6 +139,21 @@ export default function Home() {
       setPreBlog({ title: '', body: '', userId: currentUser.id, author: currentUser.name, tags: [], saga: '' });
       setCreatingBlog(false);
     })
+  }
+
+  const applyFilter = () => {
+    const params: FilterBlog = {
+      tags: filterTags.length === 0 ? undefined : filterTags,
+      saga: filterSaga === '' ? undefined : filterSaga
+    }
+    const stringy = params ? JSON.stringify(params) : ''
+    Axios.get(`${API}/getBlogsFiltered`, { params: { filters: stringy }}).then(res => {
+      console.log(res.data.items)
+    })
+  }
+
+  const clearFilters = () => {
+    console.log('clearing')
   }
 
   const getCurrentUser = (id: string) => {
@@ -200,7 +216,7 @@ export default function Home() {
           <div>
             <div className='flex flex-row mb-5'>
               <div>
-                <Image className='rounded-2xl m-0' src='/profile.jpg' alt='profile' width={100} height={100} />
+                <Image className='rounded-2xl m-0' src={S3_URL+pageAuthor.id+'.jpg'} alt='profile' width={100} height={100} />
               </div>
               <div className='flex flex-col ml-3 flex-1 justify-center'>
                 <div className='justify-between flex-row flex items-center'>
@@ -250,6 +266,16 @@ export default function Home() {
                   <ArrowRight onClick={() => incrementPage('tags', 1)} height={25}/>
                 </div>
 
+              </div>
+              <div className='flex-row flex w-full justify-center mt-5'>
+                <span className='bg-sky-300 flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold cursor-pointer select-none mr-5'
+                  onClick={() => applyFilter()}>
+                  Apply
+                </span>
+                <span className='bg-sky-300 flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold cursor-pointer select-none ml-5'
+                  onClick={() => clearFilters()}>
+                  Clear
+                </span>
               </div>
             </div>
 

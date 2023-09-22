@@ -12,9 +12,21 @@ export interface Blog {
   title: string,
   body: string,
   userId: string,
+  author: string,
   visible: boolean,
   tags: string[],
   saga: string
+}
+export interface FilterBlog {
+  id?: string
+  createdAt?: string
+  title?: string,
+  body?: string,
+  userId?: string,
+  author?: string,
+  visible?: boolean,
+  tags?: string[],
+  saga?: string
 }
 export interface User {
   location: string,

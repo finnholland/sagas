@@ -16,12 +16,16 @@ def lambda_handler(event, context):
     body = json.loads(event["body"])
     # body = event
     id  = type + "-" + unique_id + "-" + createdAt
-    lowerTags = [t.lower() for t in body["userTags"]]
+    lowerUserTags = [t.lower() for t in body["userTags"]]
+    lowerTags = [t.lower() for t in body["tags"]]
+    lowerUserSagas = [t.lower() for t in body["userSagas"]]
+    lowerSaga = body["saga"].lower()
+    
     newSagas = []
-    for saga in body['userSagas']:
+    for saga in lowerUserSagas:
         tempSaga = saga['saga']
         tempUpdated = saga['updated']
-        if saga['saga'] == body["saga"] and saga['updated'] == "":
+        if saga['saga'] == lowerSaga and saga['updated'] == "":
             tempUpdated = createdAt
         newSagas.append({"saga": tempSaga, "updated": tempUpdated})
 
@@ -37,7 +41,7 @@ def lambda_handler(event, context):
             "author": body["author"],
             "visible": True,
             "tags": lowerTags,
-            "saga": body["saga"].lower(),
+            "saga": lowerSaga,
         },
     )
 
@@ -50,7 +54,7 @@ def lambda_handler(event, context):
             },
             UpdateExpression="SET tags = :newTags",
             ExpressionAttributeValues={
-                ':newTags': lowerTags
+                ':newTags': lowerUserTags
             }
         )
 
