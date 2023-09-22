@@ -122,13 +122,13 @@ export default function Home() {
     const index = newSagas.findIndex(t => t.saga.toLowerCase() === preBlog.saga.toLowerCase());
     if (index >= 0) {
       newSagas[index].updated = '';
-    } else if (index >= 0) {
+    } else if (index === -1) {
       newSagas.push({saga: preBlog.saga, updated: ''})
     }
     if (preBlog.tags.length === 1 && preBlog.tags[0] === '') {
       setPreBlog(prev => ({ ...prev, tags: [] }))
     }
-    
+
     let combinedTags = Array.from(new Set(currentUser.tags.concat(preBlog.tags)));
     if (combinedTags === currentUser.tags) {
       combinedTags = []
