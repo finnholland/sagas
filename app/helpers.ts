@@ -2,6 +2,7 @@ import moment from "moment";
 import { DATE_TYPE, S3_URL } from "./constants";
 import AWS from 'aws-sdk';
 import { ACCESS_KEY_ID, SECRET_ACCESS_KEY } from "./secrets";
+import { Saga } from "./types";
 
 export const getDateAge = (createdAt: string, type: string) => {
   const now = moment(new Date()).utcOffset('+0000'); //todays date
@@ -92,4 +93,12 @@ export const dataURLtoFile = (dataurl: string, filename: string) => {
 
 export const isEmpty = (str: string): boolean => {
   return str.trim() === "";
+}
+
+export const sortSagaFilters = (filters: Saga[]): Saga[] => {
+  const sorted = filters.sort((a, b) => moment(b.updated, 'YYYY-MM-DDT00:00:00').diff(moment(a.updated, 'YYYY-MM-DDT00:00:00')))
+  return sorted
+}
+export const sortTagFilters = (filters: string[]): string[] => {
+  return filters.sort();
 }
