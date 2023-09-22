@@ -21,7 +21,6 @@ def lambda_handler(event, context):
     for saga in body['userSagas']:
         tempSaga = saga['saga']
         tempUpdated = saga['updated']
-
         if saga['saga'] == body["saga"] and saga['updated'] == "":
             tempUpdated = createdAt
         newSagas.append({"saga": tempSaga, "updated": tempUpdated})
@@ -36,13 +35,13 @@ def lambda_handler(event, context):
             "body": body["body"],
             "userId": body["userId"],
             "author": body["author"],
-            "visible": body["visible"],
+            "visible": True,
             "tags": lowerTags,
             "saga": body["saga"].lower(),
         },
     )
 
-    if body['userTags'] != []:
+    if len(body['userTags']) != 0:
         response = table.update_item(
             TableName=tableName,
             Key={
