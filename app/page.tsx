@@ -31,7 +31,6 @@ interface PreBlog {
   body: string,
   userId: string,
   author: string,
-  visible: boolean,
   tags: string[],
   saga: string
 }
@@ -66,7 +65,7 @@ interface Saga {
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: ''})
   const [pageAuthor, setPageAuthor] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: ''})
-  const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: currentUser.id, author: currentUser.name, visible: true, tags: [], saga: ''});
+  const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: currentUser.id, author: currentUser.name, tags: [], saga: ''});
   const [blogs, setBlogs] = useState<Blog[]>();
   const [authenticated, setAuthenticated] = useState(false)
   const [loaded, setLoaded] = useState(false)
@@ -102,13 +101,13 @@ export default function Home() {
         getCurrentUser(res.username)
       }
     }).finally(() => setLoaded(true))
-    // Axios.get(`${API}/getBlogs`).then(res => {
-    //   last_evaluated_key = res.data.last_evaluated_key
-    //   setBlogs(res.data.items)
-    // });
-    // Axios.get(`${API}/getPageAuthor`).then(res => {
-    //   setPageAuthor(res.data)
-    // });
+    Axios.get(`${API}/getBlogs`).then(res => {
+      last_evaluated_key = res.data.last_evaluated_key
+      setBlogs(res.data.items)
+    });
+    Axios.get(`${API}/getPageAuthor`).then(res => {
+      setPageAuthor(res.data)
+    });
   }, [])
 
   const nextPage = () => {
@@ -120,12 +119,14 @@ export default function Home() {
 
   const createBlog = () => {
     let newSagas = currentUser.sagas || [];
-    console.log(currentUser.sagas)
     const index = newSagas.findIndex(t => t.saga.toLowerCase() === preBlog.saga.toLowerCase());
-    if (newSagas.length != 0 && index === -1) {
-        newSagas.push({saga: preBlog.saga, updated: ''})
-    } else {
+    if (index >= 0) {
       newSagas[index].updated = '';
+    } else if (index >= 0) {
+      newSagas.push({saga: preBlog.saga, updated: ''})
+    }
+    if (preBlog.tags.length === 1 && preBlog.tags[0] === '') {
+      setPreBlog(prev => ({ ...prev, tags: [] }))
     }
     
     let combinedTags = Array.from(new Set(currentUser.tags.concat(preBlog.tags)));
@@ -134,7 +135,7 @@ export default function Home() {
     }
 
     Axios.post(`${API}/createBlog`, { ...preBlog, userTags: combinedTags, userSagas: newSagas, createdAt: currentUser.createdAt }).then(res => {
-      setPreBlog({ title: '', body: '', userId: currentUser.id, author: currentUser.name, visible: true, tags: [], saga: '' });
+      setPreBlog({ title: '', body: '', userId: currentUser.id, author: currentUser.name, tags: [], saga: '' });
       setCreatingBlog(false);
     })
   }
@@ -143,7 +144,7 @@ export default function Home() {
     setAuthenticated(true);
     Axios.get(`${API}/getCurrentUser`, {params: {id: id}}).then(res => {
       setCurrentUser(res.data)
-      console.log(res.data?.sagas)
+      setPreBlog(prev => ({ ...prev, author: res.data.name, userId: res.data.id }))
     })
   }
 
