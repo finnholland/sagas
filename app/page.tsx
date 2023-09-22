@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
 import {API, DATE_TYPE} from './constants'
-import { dataURLtoFile, getDateAge, uploadFile } from './helpers';
+import { dataURLtoFile, getDateAge, isEmpty, uploadFile } from './helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
 import { v4 as uuidv4 } from 'uuid';
@@ -61,6 +61,9 @@ interface Saga {
 }
 
 
+const PAGE_SIZE = 5
+let tagsLength = 0;
+let sagasLength = 0;
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: ''})
@@ -74,6 +77,10 @@ export default function Home() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
+  const [pageSagas, setPageSagas] = useState<Saga[]>([]);
+  const [pageTags, setPageTags] = useState<string[]>([]);
+  const [pageNumber, setPageNumber] = useState({tagPage: 1, sagaPage: 1})
+
   function handleEditorChange({ html, text }: { html: string, text: string }) {
     if (html && text)
       setPreBlog(prev => ({ ...prev, body: text }))
@@ -85,7 +92,6 @@ export default function Home() {
       const reader = new FileReader();
       reader.onload = data => {
         if (data.target && data.target.result) {
-          console.log(data.target.result)
           if (typeof data.target.result === 'string') {
             uploadFile('images/'+uuid, dataURLtoFile(data.target.result, 'images/'+uuid)).then(res => resolve(res))
           }
@@ -96,6 +102,8 @@ export default function Home() {
   };
 
   useEffect(() => {
+    setPageTags(pageTags.slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
+    tagsLength = Math.ceil(pageTags.length/PAGE_SIZE)
     Auth.currentAuthenticatedUser().then((res) => {
       if (res != undefined) {
         getCurrentUser(res.username)
@@ -107,6 +115,10 @@ export default function Home() {
     });
     Axios.get(`${API}/getPageAuthor`).then(res => {
       setPageAuthor(res.data)
+      setPageTags(res.data.tags.slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
+      setPageSagas(res.data.sagas.slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
+      tagsLength = Math.ceil(res.data.tags.length/PAGE_SIZE);
+      sagasLength = Math.ceil(res.data.sagas.length/PAGE_SIZE);
     });
   }, [])
 
@@ -117,19 +129,35 @@ export default function Home() {
     })
   }
 
+  const incrementPage = (type: string, increment: number) => {
+    const tagIncrement = pageNumber.tagPage + increment;
+    const sagaIncrement = pageNumber.sagaPage + increment;
+
+    if (type === 'sagas' && sagaIncrement > 0 && sagaIncrement <= sagasLength) {
+      let paginated = pageAuthor.sagas;
+      const page = sagaIncrement;
+      setPageNumber(prev => ({ ...prev, sagaPage: page }));
+      setPageSagas(paginated.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE));
+    } else if (type === 'tags' && tagIncrement > 0 && tagIncrement <= tagsLength){
+      let paginated = pageAuthor.tags;
+      setPageNumber(prev => ({ ...prev, tagPage: tagIncrement }));
+      setPageTags(paginated.slice((tagIncrement - 1) * PAGE_SIZE, tagIncrement * PAGE_SIZE));
+    }
+  }
+
   const createBlog = () => {
     let newSagas = currentUser.sagas || [];
-    const index = newSagas.findIndex(t => t.saga.toLowerCase() === preBlog.saga.toLowerCase());
-    if (index >= 0) {
-      newSagas[index].updated = '';
-    } else if (index === -1) {
-      newSagas.push({saga: preBlog.saga, updated: ''})
-    }
-    if (preBlog.tags.length === 1 && preBlog.tags[0] === '') {
-      setPreBlog(prev => ({ ...prev, tags: [] }))
+    if (!isEmpty(preBlog.saga)) {
+      const index = newSagas.findIndex(t => t.saga.toLowerCase() === preBlog.saga.toLowerCase());
+      if (index >= 0) {
+        newSagas[index].updated = '';
+      } else if (index === -1) {
+        newSagas.push({saga: preBlog.saga, updated: ''})
+      }
     }
 
-    let combinedTags = Array.from(new Set(currentUser.tags.concat(preBlog.tags)));
+    const newTags = preBlog.tags.filter((str: string) => !isEmpty(str));
+    let combinedTags = Array.from(new Set(currentUser.tags.concat(newTags)));
     if (combinedTags === currentUser.tags) {
       combinedTags = []
     }
@@ -216,7 +244,7 @@ export default function Home() {
             <div className='mt-2'>
               <div className=' bg-neutral-200 w-full h-64 rounded-2xl flex-col flex'>
                 <span>Sagas</span>
-                {pageAuthor?.sagas?.map((saga) => {
+                {pageSagas.map((saga) => {
                   return (
                     <div key={saga.saga}>
                       <span>{saga.saga}</span>
@@ -225,14 +253,26 @@ export default function Home() {
                     </div>
                   )
                 })}
+                <div className='flex-row flex w-full justify-between'>
+                  <span onClick={() => incrementPage('sagas', -1)}>prev page</span>
+                  <span>{pageNumber.sagaPage} of {sagasLength}</span>
+                  <span onClick={() => incrementPage('sagas', 1)}>next page</span>
+                </div>
+
               </div>
               <div className=' bg-neutral-200 w-full h-64 rounded-2xl flex-col flex'>
                 <span>Categories</span>
-                  {pageAuthor?.tags?.map((tag) => {
+                  {pageTags.map((tag) => {
                     return (
                       <span key={tag}>{tag}</span>
                     )
                   })}
+                <div className='flex-row flex w-full justify-between'>
+                  <span onClick={() => incrementPage('tags', -1)}>prev page</span>
+                  <span>{pageNumber.tagPage} of {tagsLength}</span>
+                  <span onClick={() => incrementPage('tags', 1)}>next page</span>
+                </div>
+
               </div>
             </div>
 

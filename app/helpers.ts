@@ -89,3 +89,7 @@ export const dataURLtoFile = (dataurl: string, filename: string) => {
   }
   return new File([u8arr], filename, { type: mime });
 }
+
+export const isEmpty = (str: string): boolean => {
+  return str.trim() === "";
+}
