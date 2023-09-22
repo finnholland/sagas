@@ -27,14 +27,11 @@ def lambda_handler(event, context):
         if param_key == 'tags':
 
             # For the 'tags' attribute, parse it as a JSON string and search within it
-            if isinstance(param_value, list) and all(isinstance(item, dict) for item in param_value):
-                for tag_dict in param_value:
+            for tag_value in param_value:
 
-                    for tag_key, tag_value in tag_dict.items():
-
-                        # For each tag key-value pair, add a contains condition
-                        query_params['FilterExpression'] += f'contains(tags, :{tag_key}) AND '
-                        query_params['ExpressionAttributeValues'][f':{tag_key}'] = tag_value
+                # For each tag key-value pair, add a contains condition
+                query_params['FilterExpression'] += f'contains(tags, :{tag_value}) AND '
+                query_params['ExpressionAttributeValues'][f':{tag_value}'] = tag_value
 
         else:
             # For other attributes, simply filter by equality
