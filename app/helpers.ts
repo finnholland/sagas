@@ -3,6 +3,7 @@ import { DATE_TYPE, S3_URL } from "./constants";
 import AWS from 'aws-sdk';
 import { ACCESS_KEY_ID, SECRET_ACCESS_KEY } from "./secrets";
 import { Saga } from "./types";
+import { Dispatch, SetStateAction } from "react";
 
 export const getDateAge = (createdAt: string, type: string) => {
   const now = moment(new Date()).utcOffset('+0000'); //todays date
@@ -101,4 +102,31 @@ export const sortSagaFilters = (filters: Saga[]): Saga[] => {
 }
 export const sortTagFilters = (filters: string[]): string[] => {
   return filters.sort();
+}
+
+interface ToggleTagProps {
+  name: string
+  filterTags: string[]
+  setFilterTags: Dispatch<SetStateAction<string[]>>
+}
+interface ToggleSagaProps {
+  name: string
+  filterSaga: string
+  setFilterSaga: Dispatch<SetStateAction<string>>
+}
+export const toggleTagFilter = ({ name, filterTags, setFilterTags }: ToggleTagProps) => {
+  const index = filterTags.indexOf(name);
+  if (index >= 0) {
+    setFilterTags(filterTags.filter(f => f !== name))
+  } else {
+    setFilterTags([...filterTags, name])
+  }
+}
+
+export const toggleSagaFilter = ({ name, filterSaga, setFilterSaga }: ToggleSagaProps) => {
+  if (filterSaga === name) {
+    setFilterSaga('')
+  } else {
+    setFilterSaga(name)
+  }
 }

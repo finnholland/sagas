@@ -4,36 +4,47 @@ from boto3.dynamodb.conditions import Key
 
 tableName = 'sagas'
 indexName = 'type-createdAt-index'
+scanIndexForward=False
+limit=5
 client = boto3.resource('dynamodb').Table(tableName)
 def lambda_handler(event, context):
+    filters = None
+    if event['queryStringParameters'] is not None and event['queryStringParameters']['filters'] is not None:
+        filters = json.loads(event['queryStringParameters']['filters'])
+
+    last_evaluated_filter_key = None
+    if event['queryStringParameters'] is not None and event['queryStringParameters']['last_evaluated_filter_key'] is not None:
+        last_evaluated_filter_key = json.loads(event['queryStringParameters']['last_evaluated_filter_key'])
+
     query_params = {
         'TableName': tableName,
         'IndexName': indexName,
         'KeyConditionExpression': '',
         'FilterExpression': '',
         'ExpressionAttributeNames': {},
-        'ExpressionAttributeValues': {}
+        'ExpressionAttributeValues': {},
+        'ScanIndexForward':scanIndexForward,
+        'Limit':limit,
+        'ExclusiveStartKey': last_evaluated_filter_key
     }
+    
+    # if last_evaluated_filter_key is not None:
+        
 
     query_params['KeyConditionExpression'] += f'#type = :type'
     query_params['ExpressionAttributeNames'][f'#type'] = 'type'
     query_params['ExpressionAttributeValues'][f':type'] = 'blog'
-    filters = None
-    if event['queryStringParameters'] is not None and event['queryStringParameters']['filters'] is not None:
-        filters = json.loads(event['queryStringParameters']['filters'])
 
     for param_key, param_value in filters.items():
 
         if param_key == 'tags':
-
             # For the 'tags' attribute, parse it as a JSON string and search within it
             for tag_value in param_value:
 
                 # For each tag key-value pair, add a contains condition
                 query_params['FilterExpression'] += f'contains(tags, :{tag_value}) AND '
                 query_params['ExpressionAttributeValues'][f':{tag_value}'] = tag_value
-
-        else:
+        elif param_key != 'last_evaluated_filter_key':
             # For other attributes, simply filter by equality
             query_params['FilterExpression'] += f'{param_key} = :{param_key} AND '
             query_params['ExpressionAttributeValues'][f':{param_key}'] = param_value
@@ -43,15 +54,17 @@ def lambda_handler(event, context):
     
 
     response = client.query(**query_params)
-
+    print(response)
+    last_evaluated_filter_key = response.get('LastEvaluatedKey')
+    
     responseBody = {
         'message': 'Success',
-        'query': query_params,
-        'items': response['Items']
+        'items': response['Items'],
+        'last_evaluated_filter_key': last_evaluated_filter_key
     }
 
     response = {
-        'statusCode': 200,
+        'statusCode': response['ResponseMetadata']['HTTPStatusCode'],
         'body': json.dumps(responseBody)
     }
 
