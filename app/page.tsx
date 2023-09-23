@@ -29,8 +29,8 @@ Amplify.configure({
 const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
 });
-let last_evaluated_key =  ''
-let last_evaluated_filter_key =  ''
+let last_evaluated_key: string | null =  null
+let last_evaluated_filter_key: string | null =  null
 
 
 
@@ -55,7 +55,7 @@ export default function Home() {
   const [pageNumber, setPageNumber] = useState({tagPage: 1, sagaPage: 1})
   const [filterSaga, setFilterSaga] = useState('')
   const [filterTags, setFilterTags] = useState<string[]>([])
-  const [filterBlog, setFilterBlog] = useState<Blog>({id: '', createdAt: '', title: '', body: '', userId: currentUser.id, author: currentUser.name, tags: filterTags, saga: filterSaga, visible: true, });
+  const [filtering, setFiltering] = useState(false)
 
   function handleEditorChange({ html, text }: { html: string, text: string }) {
     if (html && text)
@@ -147,7 +147,8 @@ export default function Home() {
     })
   }
 
-  const applyFilter = () => {
+  const getBlogsFiltered = () => {
+    setFiltering(true);
     const filter = last_evaluated_filter_key ? JSON.stringify(last_evaluated_filter_key) : ''
     const params: FilterBlog = {
       tags: filterTags.length === 0 ? undefined : filterTags,
@@ -175,6 +176,9 @@ export default function Home() {
   const clearFilters = () => {
     console.log('clearing')
     setBlogs(storageArray);
+    setFilterSaga('');
+    setFilterTags([]);
+    setFiltering(true);
   }
 
   const getCurrentUser = (id: string) => {
@@ -232,7 +236,8 @@ export default function Home() {
           {blogs?.map((item) => (
             <BlogItem key={item.id} blog={item} filterSaga={filterSaga} filterTags={filterTags} setFilterSaga={setFilterSaga} setFilterTags={setFilterTags}/>
           ))}
-          <button onClick={() => getBlogs()} hidden={last_evaluated_key === null}>next page</button>
+          <button onClick={() => getBlogs()} hidden={last_evaluated_key === null && !filtering}>next page</button>
+          <button onClick={() => getBlogsFiltered()} hidden={last_evaluated_filter_key === null && filtering}>next page</button>
         </div>
         <div className='w-1/4 flex-3 h-full px-10 justify-between flex flex-col' >
           <div>
@@ -291,7 +296,7 @@ export default function Home() {
               </div>
               <div className='flex-row flex w-full justify-center mt-5'>
                 <span className='bg-sky-300 flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold cursor-pointer select-none mr-5'
-                  onClick={() => applyFilter()}>
+                  onClick={() => getBlogsFiltered()}>
                   Apply
                 </span>
                 <span className='bg-sky-300 flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold cursor-pointer select-none ml-5'
