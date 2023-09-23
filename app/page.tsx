@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
 import {API, DATE_TYPE, S3_URL} from './constants'
-import { dataURLtoFile, getDateAge, isEmpty, sortSagaFilters, sortTagFilters, uploadFile } from './helpers';
+import { dataURLtoFile, getDateAge, isEmpty, sortSagaFilters, sortTagFilters, toggleSagaFilter, toggleTagFilter, uploadFile } from './helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
 import { v4 as uuidv4 } from 'uuid';
@@ -30,18 +30,19 @@ const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
 });
 let last_evaluated_key =  ''
+let last_evaluated_filter_key =  ''
 
 
 
 const PAGE_SIZE = 5
 let tagsLength = 0;
 let sagasLength = 0;
-
+let storageArray: Blog[] = []
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: ''})
   const [pageAuthor, setPageAuthor] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: ''})
   const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: currentUser.id, author: currentUser.name, tags: [], saga: ''});
-  const [blogs, setBlogs] = useState<Blog[]>();
+  const [blogs, setBlogs] = useState<Blog[]>([]);
   const [authenticated, setAuthenticated] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [creatingBlog, setCreatingBlog] = useState(false)
@@ -82,10 +83,7 @@ export default function Home() {
         getCurrentUser(res.username)
       }
     }).finally(() => setLoaded(true))
-    Axios.get(`${API}/getBlogs`).then(res => {
-      last_evaluated_key = res.data.last_evaluated_key
-      setBlogs(res.data.items)
-    });
+    getBlogs();
     Axios.get(`${API}/getPageAuthor`).then(res => {
       setPageAuthor(res.data)
       setPageTags(sortTagFilters(res.data.tags).slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
@@ -95,11 +93,19 @@ export default function Home() {
     });
   }, [])
 
-  const nextPage = () => {
+  const getBlogs = () => {
     const stringy = last_evaluated_key ? JSON.stringify(last_evaluated_key) : ''
-    Axios.get(`${API}/getBlogs`, { params: { last_evaluated_key: stringy }}).then(res => {
-      last_evaluated_key = res.data.last_evaluated_key
-    })
+    if (stringy != '') {
+      Axios.get(`${API}/getBlogs`, { params: { last_evaluated_key: stringy } }).then(res => {
+        setBlogs([...blogs, ...res.data.items])
+        last_evaluated_key = res.data.last_evaluated_key        
+      })
+    } else {
+      Axios.get(`${API}/getBlogs`).then(res => {
+        last_evaluated_key = res.data.last_evaluated_key
+        setBlogs(res.data.items)
+      });
+    }
   }
 
   const incrementPage = (type: string, increment: number) => {
@@ -142,18 +148,33 @@ export default function Home() {
   }
 
   const applyFilter = () => {
+    const filter = last_evaluated_filter_key ? JSON.stringify(last_evaluated_filter_key) : ''
     const params: FilterBlog = {
       tags: filterTags.length === 0 ? undefined : filterTags,
       saga: filterSaga === '' ? undefined : filterSaga
     }
     const stringy = params ? JSON.stringify(params) : ''
-    Axios.get(`${API}/getBlogsFiltered`, { params: { filters: stringy }}).then(res => {
-      console.log(res.data.items)
-    })
+    if (filter != '') { 
+      Axios.get(`${API}/getBlogsFiltered`, { params: { filters: stringy, last_evaluated_filter_key: filter }}).then(res => {
+        console.log(res.data.items)
+        storageArray = blogs;
+        setBlogs(res.data.items);
+        last_evaluated_filter_key = res.data.last_evaluated_filter_key
+      })
+    } else {
+      Axios.get(`${API}/getBlogsFiltered`, { params: { filters: stringy }}).then(res => {
+        console.log(res.data.items)
+        storageArray = blogs;
+        setBlogs(res.data.items);
+        last_evaluated_filter_key = res.data.last_evaluated_filter_key
+      })
+    }
+
   }
 
   const clearFilters = () => {
     console.log('clearing')
+    setBlogs(storageArray);
   }
 
   const getCurrentUser = (id: string) => {
@@ -209,8 +230,9 @@ export default function Home() {
             <input type="text" placeholder='saga' onChange={(e) => setPreBlog(prev => ({ ...prev, saga: e.target.value }))} />
           </div>) : (null)}
           {blogs?.map((item) => (
-            <BlogItem key={item.id} blog={item}/>
+            <BlogItem key={item.id} blog={item} filterSaga={filterSaga} filterTags={filterTags} setFilterSaga={setFilterSaga} setFilterTags={setFilterTags}/>
           ))}
+          <button onClick={() => getBlogs()} hidden={last_evaluated_key === null}>next page</button>
         </div>
         <div className='w-1/4 flex-3 h-full px-10 justify-between flex flex-col' >
           <div>
@@ -305,13 +327,28 @@ export default function Home() {
 
 interface BlogProps {
   blog: Blog
+  filterSaga: string
+  setFilterSaga: Dispatch<SetStateAction<string>>
+  filterTags: string[]
+  setFilterTags: Dispatch<SetStateAction<string[]>>
 }
 
-const BlogItem: React.FC<BlogProps> = ({blog}) => {
+const BlogItem: React.FC<BlogProps> = ({blog, filterSaga, filterTags, setFilterSaga, setFilterTags}) => {
   return (
     <div className='flex-col flex mb-20'>
-      <span className='text-xl font-semibold'>{blog.title}</span>
-      <span className='text-sm mt-1 mb-3'>{getDateAge(blog.createdAt, DATE_TYPE.BLOG)}</span>
+      <div className='flex-row flex justify-between'>
+        <span className='text-xl font-semibold'>{blog.title}</span>
+        <span onClick={() => toggleSagaFilter({ name: blog.saga, filterSaga, setFilterSaga })} className='font-medium'>{blog.saga}</span>
+
+      </div>
+      <div className='flex-row flex justify-between'>
+        <span className='text-sm mt-1 mb-3'>{getDateAge(blog.createdAt, DATE_TYPE.BLOG)}</span>
+        <div>
+          {blog.tags.map((tag) => {
+            return <span className='text-sky-300 underline ml-2' onClick={() => toggleTagFilter({ name: tag, filterTags, setFilterTags })} key={tag}>{tag}</span>
+          })}
+        </div>
+      </div>
       <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>
     </div>
   )
@@ -324,16 +361,8 @@ interface SagaProps {
   setFilterSaga: Dispatch<SetStateAction<string>>
 }
 const SagaFilter: React.FC<SagaProps> = ({ name, updated, filterSaga, setFilterSaga }) => {
-  const toggleFilter = () => {
-    
-    if (filterSaga === name) {
-      setFilterSaga('')
-    } else {
-      setFilterSaga(name)
-    }
-  }
   return (
-    <div onClick={() => toggleFilter()} className='flex-row flex w-full justify-between my-2 cursor-pointer'>
+    <div onClick={() => toggleSagaFilter({name, filterSaga, setFilterSaga})} className='flex-row flex w-full justify-between my-2 cursor-pointer'>
       <span className={`font-medium ${filterSaga===name ? 'text-sky-300' : ''}`}>{name}</span>
       <span className={`font-medium ${filterSaga===name ? 'text-sky-300' : ''}`}>{getDateAge(updated,DATE_TYPE.SAGA)}</span>
     </div>
@@ -346,16 +375,8 @@ interface TagProps {
   setFilterTags: Dispatch<SetStateAction<string[]>>
 }
 const TagFilter: React.FC<TagProps> = ({ name, filterTags, setFilterTags }) => {
-  const toggleFilter = () => {
-    const index = filterTags.indexOf(name);
-    if (index >= 0) {
-      setFilterTags(filterTags.filter(f => f !== name))
-    } else {
-      setFilterTags([...filterTags, name])
-    }
-  }
   return (
-    <div onClick={() => toggleFilter()} className='flex-row flex w-full justify-between my-2 cursor-pointer'>
+    <div onClick={() => toggleTagFilter({ name, filterTags, setFilterTags })} className='flex-row flex w-full justify-between my-2 cursor-pointer'>
       <span className={`font-medium ${filterTags.includes(name) ? 'text-sky-300' : ''}`}>{name}</span>
       {filterTags.includes(name) ? <Remove width={15} /> : <Plus width={15} />}
     </div>
