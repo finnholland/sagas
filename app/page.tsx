@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
 import {API, DATE_TYPE, S3_URL} from './constants'
-import { addOrRemoveTag, dataURLtoFile, getDateAge, isEmpty, sortSagaFilters, sortTagFilters, toggleSagaFilter, toggleTagFilter, uploadFile } from './helpers';
+import { addOrRemoveTag, dataURLtoFile, getDateAge, isEmpty, sortAndReduce, sortSagaFilters, sortTagFilters, toggleSagaFilter, toggleTagFilter, uploadFile } from './helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
 import { v4 as uuidv4 } from 'uuid';
@@ -106,8 +106,9 @@ export default function Home() {
     const stringy = last_evaluated_key ? JSON.stringify(last_evaluated_key) : ''
     if (stringy != '') {
       Axios.get(`${API}/getBlogs`, { params: { last_evaluated_key: stringy } }).then(res => {
-        setBlogs([...blogs, ...res.data.items])
-        blogsLength = Math.ceil([...blogs, ...res.data.items].length / PAGE_SIZE);
+        const newBlogs = sortAndReduce([...blogs, ...res.data.items])
+        setBlogs(newBlogs)
+        blogsLength = Math.ceil(newBlogs.length / PAGE_SIZE);
         last_evaluated_key = res.data.last_evaluated_key
       })
     } else {
@@ -166,6 +167,10 @@ export default function Home() {
   }
 
   const getBlogsFiltered = () => {
+    if (filterSaga === '' && filterTags.length === 0) {
+      clearFilters();
+      return
+    }
     setFiltering(true);
     const filter = last_evaluated_filter_key ? JSON.stringify(last_evaluated_filter_key) : ''
     const params: FilterBlog = {
@@ -197,16 +202,8 @@ export default function Home() {
     setFilterTags([]);
     setFiltering(false);
     storageArray = storageArray.concat(filtered);
-    console.log(storageArray)
-    storageArray = storageArray.reduce((unique: Blog[], o) => {
-        if(!unique.some(u => u.id === o.id)) {
-          unique.push(o);
-        }
-        return unique;
-    }, []);
-    storageArray.sort((a, b) => moment(b.createdAt, 'YYYY-MM-DDT00:00:00').diff(moment(a.createdAt, 'YYYY-MM-DDT00:00:00')))
+    storageArray = sortAndReduce(storageArray)
     setBlogs(storageArray);
-    console.log(storageArray)
   }
 
   const getCurrentUser = (id: string) => {

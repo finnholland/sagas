@@ -2,7 +2,7 @@ import moment from "moment";
 import { DATE_TYPE, S3_URL } from "./constants";
 import AWS from 'aws-sdk';
 import { ACCESS_KEY_ID, SECRET_ACCESS_KEY } from "./secrets";
-import { PreBlog, Saga } from "./types";
+import { Blog, PreBlog, Saga } from "./types";
 import { Dispatch, SetStateAction } from "react";
 
 export const getDateAge = (createdAt: string, type: string) => {
@@ -143,4 +143,16 @@ export const addOrRemoveTag = ({ tag, preBlog, setPreBlog }: AddOrRemoveTagProps
   } else {
     setPreBlog(prev => ({ ...prev, tags: [...prev.tags, tag] }))
   }
+}
+
+export const sortAndReduce = (array: Blog[]): Blog[] => {
+  let blogs: Blog[] = array.reduce((unique: Blog[], o) => {
+    if (!unique.some(u => u.id === o.id)) {
+      unique.push(o);
+    }
+    return unique;
+  }, []);
+  blogs.sort((a, b) => moment(b.createdAt, 'YYYY-MM-DDT00:00:00').diff(moment(a.createdAt, 'YYYY-MM-DDT00:00:00')))
+
+  return blogs
 }
