@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
 import {API, DATE_TYPE, S3_URL} from './constants'
-import { dataURLtoFile, getDateAge, isEmpty, sortSagaFilters, sortTagFilters, toggleSagaFilter, toggleTagFilter, uploadFile } from './helpers';
+import { addOrRemoveTag, dataURLtoFile, getDateAge, isEmpty, sortSagaFilters, sortTagFilters, toggleSagaFilter, toggleTagFilter, uploadFile } from './helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,6 +17,12 @@ import ArrowRight from './assets/ArrowRight';
 import Plus from './assets/Plus';
 import Remove from './assets/Remove';
 import { Saga, User, PreBlog, Blog, FilterBlog } from './types';
+import moment from 'moment';
+import ArrowDown from './assets/ArrowDown';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import GitHub from './assets/logos/GitHub';
+import LinkedIn from './assets/logos/LinkedIn';
+import Modal from 'react-modal';
 
 Amplify.configure({
   Auth: {
@@ -37,6 +43,7 @@ let last_evaluated_filter_key: string | null =  null
 const PAGE_SIZE = 5
 let tagsLength = 0;
 let sagasLength = 0;
+let blogsLength = 0;
 let storageArray: Blog[] = []
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: ''})
@@ -46,13 +53,15 @@ export default function Home() {
   const [authenticated, setAuthenticated] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [creatingBlog, setCreatingBlog] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
   const [loggingIn, setLoggingIn] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [tag, setTag] = useState('')
 
   const [pageSagas, setPageSagas] = useState<Saga[]>([]);
   const [pageTags, setPageTags] = useState<string[]>([]);
-  const [pageNumber, setPageNumber] = useState({tagPage: 1, sagaPage: 1})
+  const [pageNumber, setPageNumber] = useState({tagPage: 1, sagaPage: 1, blogPage: 1})
   const [filterSaga, setFilterSaga] = useState('')
   const [filterTags, setFilterTags] = useState<string[]>([])
   const [filtering, setFiltering] = useState(false)
@@ -98,12 +107,14 @@ export default function Home() {
     if (stringy != '') {
       Axios.get(`${API}/getBlogs`, { params: { last_evaluated_key: stringy } }).then(res => {
         setBlogs([...blogs, ...res.data.items])
-        last_evaluated_key = res.data.last_evaluated_key        
+        blogsLength = Math.ceil([...blogs, ...res.data.items].length / PAGE_SIZE);
+        last_evaluated_key = res.data.last_evaluated_key
       })
     } else {
       Axios.get(`${API}/getBlogs`).then(res => {
         last_evaluated_key = res.data.last_evaluated_key
         setBlogs(res.data.items)
+        blogsLength = Math.ceil(res.data.items.length / PAGE_SIZE);
       });
     }
   }
@@ -111,6 +122,7 @@ export default function Home() {
   const incrementPage = (type: string, increment: number) => {
     const tagIncrement = pageNumber.tagPage + increment;
     const sagaIncrement = pageNumber.sagaPage + increment;
+    const blogIncrement = pageNumber.blogPage + increment;
 
     if (type === 'sagas' && sagaIncrement > 0 && sagaIncrement <= sagasLength) {
       let paginated = pageAuthor.sagas;
@@ -121,10 +133,16 @@ export default function Home() {
       let paginated = pageAuthor.tags;
       setPageNumber(prev => ({ ...prev, tagPage: tagIncrement }));
       setPageTags(paginated.slice((tagIncrement - 1) * PAGE_SIZE, tagIncrement * PAGE_SIZE));
+    } else if (type === 'blogs' && blogIncrement > 0 && blogIncrement <= tagsLength){
+      let paginated = pageAuthor.tags;
+      setPageNumber(prev => ({ ...prev, tagPage: blogIncrement }));
+      setPageTags(paginated.slice((blogIncrement - 1) * PAGE_SIZE, blogIncrement * PAGE_SIZE));
     }
   }
 
   const createBlog = () => {
+    setIsOpen(false);
+
     let newSagas = currentUser.sagas || [];
     if (!isEmpty(preBlog.saga)) {
       const index = newSagas.findIndex(t => t.saga.toLowerCase() === preBlog.saga.toLowerCase());
@@ -174,11 +192,21 @@ export default function Home() {
   }
 
   const clearFilters = () => {
-    console.log('clearing')
-    setBlogs(storageArray);
+    let filtered = blogs;
     setFilterSaga('');
     setFilterTags([]);
-    setFiltering(true);
+    setFiltering(false);
+    storageArray = storageArray.concat(filtered);
+    console.log(storageArray)
+    storageArray = storageArray.reduce((unique: Blog[], o) => {
+        if(!unique.some(u => u.id === o.id)) {
+          unique.push(o);
+        }
+        return unique;
+    }, []);
+    storageArray.sort((a, b) => moment(b.createdAt, 'YYYY-MM-DDT00:00:00').diff(moment(a.createdAt, 'YYYY-MM-DDT00:00:00')))
+    setBlogs(storageArray);
+    console.log(storageArray)
   }
 
   const getCurrentUser = (id: string) => {
@@ -199,20 +227,21 @@ export default function Home() {
     }
   }
 
+  const blogItem = blogs?.map((item) => (
+    <BlogItem key={item.id} blog={item} filterSaga={filterSaga} filterTags={filterTags} setFilterSaga={setFilterSaga} setFilterTags={setFilterTags}/>
+  ))
+
   if (!loaded) {
     return <div />
   } else {
     return (
-      <div className=' px-10 py-10 flex-1 flex h-full flex-row justify-between items-center'>
-        <div className='w-1/4 flex-3 text-center h-full px-10'>
-          <div className='w-full h-full'>
-
-          </div>
+      <div id='#yourAppElement' className=' px-10 flex-1 flex h-full flex-row justify-between items-center'>
+        <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed left-0 sides top-0 h-fit'>
         </div>
-        <div className='w-1/2 h-full px-20 flex flex-col pb-10'>
-
-          {creatingBlog ? (<div>
-            <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full'>
+        <div className='w-1/4'/>
+        <div className='w-1/2 h-full px-16 flex flex-col py-10 no-scrollbar'>
+          {creatingBlog ? (<div className='mb-10'>
+            <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full mb-5'>
               <MdEditor
                 allowPasteImage
                 onImageUpload={handleImageUpload}
@@ -227,20 +256,79 @@ export default function Home() {
             </div>
             <div className='flex-row flex justify-between mt-3'>
               <button onClick={() => setCreatingBlog(false)} className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>cancel</button>
-              <button onClick={() => createBlog()} disabled={preBlog.body == ''} className={`${preBlog.body == '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>post</button>
+              <button onClick={() => setIsOpen(true)} disabled={preBlog.body === ''} className={`${preBlog.body === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>confirm</button>
             </div>
-            <input type="text" placeholder='title' onChange={(e) => setPreBlog(prev => ({ ...prev, title: e.target.value }))} />
-            <input type="text" placeholder='tags' onChange={(e) => setPreBlog(prev => ({ ...prev, tags: e.target.value.split(',') }))} />
-            <input type="text" placeholder='saga' onChange={(e) => setPreBlog(prev => ({ ...prev, saga: e.target.value }))} />
+            <Modal isOpen={isOpen} onRequestClose={() => setIsOpen(false)} ariaHideApp={false}
+              className='border-0 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 fixed'>
+              <div className='flex-col flex w-full bg-white p-5 shadow-md rounded-2xl'>
+                <div className='w-full py-1 flex'>
+                  <span className='font-bold text-sky-300 mr-3 w-10'>Title</span>
+                  <input className='border-b-neutral-200 border-b-2 focus:border-sky-300 focus:outline-none' type="text" placeholder='title' onChange={(e) => setPreBlog(prev => ({ ...prev, title: e.target.value }))} />
+                </div>
+                <div className='w-full flex my-6'>
+                  <span className='font-bold text-sky-300 mr-3 w-10'>Saga</span>
+                  <input className='border-b-neutral-200 border-b-2 focus:border-sky-300 focus:outline-none' type="text" placeholder='saga' onChange={(e) => setPreBlog(prev => ({ ...prev, saga: e.target.value }))} />
+                </div>
+                <div className='w-full flex'>
+                  <span className='font-bold text-sky-300 mr-3 w-10'>Tags</span>
+                  <div className='flex flex-row items-center'>
+                    <input className='border-b-neutral-200 border-b-2 focus:border-sky-300 focus:outline-none mr-3' type="text" placeholder='saga' onChange={(e) => setTag(e.target.value)} />
+                    <Plus onClick={() => { setPreBlog(prev => ({ ...prev, tags: [...prev.tags, tag] })); setTag('') }} width={20}/> 
+                  </div>
+                </div>
+                <span className={`${preBlog.tags.length>0 ? '' : 'hidden'} text-sm text-neutral-600 mt-5 mb-1`}>current tags</span>
+                <div className={`${preBlog.tags.length > 0 ? '' : 'hidden'} flex flex-row w-full flex-wrap mb-3`}>
+                  {preBlog.tags.map((tag) => (
+                    <div key={tag} onClick={() => addOrRemoveTag({ tag: tag, preBlog: preBlog, setPreBlog: setPreBlog })}
+                      className={`flex-row flex items-center mr-3 mb-2 px-3 py-1 border-1 rounded-full border-sky-300 cursor-pointer select-none ${preBlog.tags.includes(tag) ? 'bg-sky-50' : ''}`}>
+                      <span className='mr-1 text-sky-300'>{tag}</span>
+                      <span>{preBlog.tags.includes(tag) ? <Remove width={15} /> : <Plus width={15} />}</span>
+                    </div>
+                  ))}
+                </div>
+                <span className='text-sm text-neutral-600 mt-5 mb-1'>previous tags</span>
+                <div className='flex flex-row w-full flex-wrap mb-3'>
+                  {pageAuthor.tags.map((tag) => (
+                    <div key={tag} onClick={() => addOrRemoveTag({ tag: tag, preBlog: preBlog, setPreBlog: setPreBlog })}
+                      className={`flex-row flex items-center mr-3 mb-2 px-3 py-1 border-1 rounded-full border-sky-300 cursor-pointer select-none ${preBlog.tags.includes(tag) ? 'hidden' : ''}`}>
+                      <span className='mr-1 text-neutral-500'>{tag}</span>
+                      <span><Plus width={15} /></span>
+                    </div>
+                  ))}
+                </div>
+                <div className='flex-row flex justify-between'>
+                  <button onClick={() => setIsOpen(false) }
+                    className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>back</button>
+                  <button onClick={() => createBlog()} disabled={preBlog.title === '' || preBlog.saga === ''}
+                    className={`${preBlog.title === '' || preBlog.saga === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>create</button>
+                </div>
+              </div>
+            </Modal>
+
           </div>) : (null)}
-          {blogs?.map((item) => (
-            <BlogItem key={item.id} blog={item} filterSaga={filterSaga} filterTags={filterTags} setFilterSaga={setFilterSaga} setFilterTags={setFilterTags}/>
-          ))}
-          <button onClick={() => getBlogs()} hidden={last_evaluated_key === null && !filtering}>next page</button>
-          <button onClick={() => getBlogsFiltered()} hidden={last_evaluated_filter_key === null && filtering}>next page</button>
+          <InfiniteScroll
+            dataLength={blogs.length}
+            next={() => console.log('loading new blogs')}
+            hasMore={(last_evaluated_key !== null && !filtering) || (last_evaluated_filter_key !== null && filtering)}
+            endMessage={<p className='text-neutral-400 text-center select-none'>no more blogs :(</p>}
+            loader={null}
+            className='overflow-visible mb-10'>
+            {blogItem}
+            <div onClick={() => getBlogs()} className={`cursor-pointer flex-row flex justify-center items-center ${last_evaluated_key === null || filtering ? 'hidden' : ''}`}>
+              <span className='mr-2 text-sky-300'>load more</span>
+              <ArrowDown className='cursor-pointer' height={25} stroke='#6ED0D7'/>
+            </div>
+            <div className={`flex-row flex justify-center items-center ${last_evaluated_filter_key === null || !filtering ? 'hidden' : ''}`}>
+              <ArrowLeft className='cursor-pointer' onClick={() => incrementPage('blogs', -1)} height={25} stroke={pageNumber.blogPage === 1 ? '#BEBEBE' : '#6ED0D7' } />
+              <span className='mx-5'>{pageNumber.blogPage} of {blogsLength}</span>
+              <ArrowRight className='cursor-pointer' onClick={() => incrementPage('blogs', 1)} height={25} stroke={pageNumber.blogPage === blogsLength ? '#BEBEBE' : '#6ED0D7' }/>
+            </div>
+          </InfiniteScroll>
+
         </div>
-        <div className='w-1/4 flex-3 h-full px-10 justify-between flex flex-col' >
-          <div>
+        <div className='w-1/4'/>
+        <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed right-0 sides top-0 h-fit' >
+          <div className='mb-5'>
             <div className='flex flex-row mb-5'>
               <div>
                 <Image className='rounded-2xl m-0' src={S3_URL+pageAuthor.id+'.jpg'} alt='profile' width={100} height={100} />
@@ -270,9 +358,10 @@ export default function Home() {
                   </div>
                 </div>
                 <div className='flex-row flex w-1/3 justify-between items-center'>
-                  <ArrowLeft onClick={() => incrementPage('sagas', -1)} height={25}/>
+                  
+                  <ArrowLeft className='cursor-pointer' onClick={() => incrementPage('sagas', -1)} height={25} stroke={pageNumber.sagaPage === 1 ? '#BEBEBE' : '#6ED0D7'} />
                   <span>{pageNumber.sagaPage} of {sagasLength}</span>
-                  <ArrowRight onClick={() => incrementPage('sagas', 1)} height={25}/>
+                  <ArrowRight className='cursor-pointer' onClick={() => incrementPage('sagas', 1)} height={25} stroke={pageNumber.sagaPage === sagasLength ? '#BEBEBE' : '#6ED0D7' }/>
                 </div>
 
               </div>
@@ -288,9 +377,9 @@ export default function Home() {
                   </div>
                 </div>
                 <div className='flex-row flex w-1/3 justify-between items-center'>
-                  <ArrowLeft onClick={() => incrementPage('tags', -1)} height={25}/>
+                  <ArrowLeft className='cursor-pointer' onClick={() => incrementPage('tags', -1)} height={25} stroke={pageNumber.tagPage === 1 ? '#BEBEBE' : '#6ED0D7' } />
                   <span>{pageNumber.tagPage} of {tagsLength}</span>
-                  <ArrowRight onClick={() => incrementPage('tags', 1)} height={25}/>
+                  <ArrowRight className='cursor-pointer' onClick={() => incrementPage('tags', 1)} height={25} stroke={pageNumber.tagPage === tagsLength ? '#BEBEBE' : '#6ED0D7' }/>
                 </div>
 
               </div>
@@ -313,8 +402,8 @@ export default function Home() {
                 <span className='text-sky-500 underline cursor-pointer' onClick={() => setLoggingIn(!loggingIn)}>log in</span>
                 {loggingIn ? (
                   <div className='flex-col'>
-                    <input value={email} onChange={(e) => setEmail(e.target.value)} className='border-sky-500 border-2 my-3 rounded-lg px-2 w-full'/>
-                    <input value={password} type='password' onChange={(e) => setPassword(e.target.value)} className='border-sky-500 border-2 rounded-lg px-2 w-full' />
+                    <input value={email} onChange={(e) => setEmail(e.target.value)} className='border-sky-500 border-1 my-3 rounded-full px-2 w-full'/>
+                    <input value={password} type='password' onChange={(e) => setPassword(e.target.value)} className='border-sky-500 border-1 rounded-full px-2 w-full' />
                     <div className='flex-row flex w-full justify-between'>
                       <span className='cursor-pointer' onClick={() => { setLoggingIn(false); setEmail('');  setPassword('')}}>cancel</span>
                       <span className='cursor-pointer' onClick={() => authenticate(true)}>confirm</span>
@@ -338,7 +427,8 @@ interface BlogProps {
   setFilterTags: Dispatch<SetStateAction<string[]>>
 }
 
-const BlogItem: React.FC<BlogProps> = ({blog, filterSaga, filterTags, setFilterSaga, setFilterTags}) => {
+const BlogItem: React.FC<BlogProps> = ({ blog, filterSaga, filterTags, setFilterSaga, setFilterTags }) => {
+  
   return (
     <div className='flex-col flex mb-20'>
       <div className='flex-row flex justify-between'>
@@ -348,9 +438,9 @@ const BlogItem: React.FC<BlogProps> = ({blog, filterSaga, filterTags, setFilterS
       </div>
       <div className='flex-row flex justify-between'>
         <span className='text-sm mt-1 mb-3'>{getDateAge(blog.createdAt, DATE_TYPE.BLOG)}</span>
-        <div>
+        <div className='cursor-pointer'>
           {blog.tags.map((tag) => {
-            return <span className='text-sky-300 underline ml-2' onClick={() => toggleTagFilter({ name: tag, filterTags, setFilterTags })} key={tag}>{tag}</span>
+            return <span className='text-sky-300 underline ml-2' title={`Add ${tag} to filter`} onClick={() => toggleTagFilter({ name: tag, filterTags, setFilterTags })} key={tag}>{tag}</span>
           })}
         </div>
       </div>
