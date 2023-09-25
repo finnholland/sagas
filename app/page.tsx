@@ -269,7 +269,7 @@ export default function Home() {
                 <div className='w-full flex'>
                   <span className='font-bold text-sky-300 mr-3 w-10'>Tags</span>
                   <div className='flex flex-row items-center'>
-                    <input className='border-b-neutral-200 border-b-2 focus:border-sky-300 focus:outline-none mr-3' type="text" placeholder='saga' onChange={(e) => setTag(e.target.value)} />
+                    <input className='border-b-neutral-200 border-b-2 focus:border-sky-300 focus:outline-none mr-3' type="text" placeholder='tag' onChange={(e) => setTag(e.target.value)} />
                     <Plus onClick={() => { setPreBlog(prev => ({ ...prev, tags: [...prev.tags, tag] })); setTag('') }} width={20}/> 
                   </div>
                 </div>
@@ -385,7 +385,7 @@ export default function Home() {
                   onClick={() => getBlogsFiltered()}>
                   Apply
                 </span>
-                <span className='bg-sky-300 flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold cursor-pointer select-none ml-5'
+                <span className={`${filterSaga === '' && filterTags.length === 0 ? 'bg-sky-200' : 'bg-sky-300'}  flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold cursor-pointer select-none ml-5`}
                   onClick={() => clearFilters()}>
                   Clear
                 </span>
