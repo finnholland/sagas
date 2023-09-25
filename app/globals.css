@@ -160,3 +160,22 @@ img {
   display: block;
   margin: auto;
 }
+
+.sides {
+  margin-top: 40px;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.ReactModal__Overlay {
+  background-color: #00000020 !important;
+}

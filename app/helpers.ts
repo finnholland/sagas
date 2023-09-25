@@ -2,7 +2,7 @@ import moment from "moment";
 import { DATE_TYPE, S3_URL } from "./constants";
 import AWS from 'aws-sdk';
 import { ACCESS_KEY_ID, SECRET_ACCESS_KEY } from "./secrets";
-import { Saga } from "./types";
+import { PreBlog, Saga } from "./types";
 import { Dispatch, SetStateAction } from "react";
 
 export const getDateAge = (createdAt: string, type: string) => {
@@ -128,5 +128,19 @@ export const toggleSagaFilter = ({ name, filterSaga, setFilterSaga }: ToggleSaga
     setFilterSaga('')
   } else {
     setFilterSaga(name)
+  }
+}
+
+interface AddOrRemoveTagProps {
+  tag: string
+  preBlog: PreBlog
+  setPreBlog: Dispatch<SetStateAction<PreBlog>>
+}
+export const addOrRemoveTag = ({ tag, preBlog, setPreBlog }: AddOrRemoveTagProps) => {
+  const index = preBlog.tags.indexOf(tag);
+  if (index >= 0) {
+    setPreBlog(prev => ({ ...prev, tags: preBlog.tags.filter(f => f !== tag) }))
+  } else {
+    setPreBlog(prev => ({ ...prev, tags: [...prev.tags, tag] }))
   }
 }

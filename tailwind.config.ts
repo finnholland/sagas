@@ -41,6 +41,9 @@ const config: Config = {
         '4/5': '80%',
         '16': '4rem',
       },
+      borderWidth: {
+        '1': '1px'
+      },
       height: {
         '1/8': '12.5%',
       }
