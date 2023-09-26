@@ -93,7 +93,7 @@ export default function Home() {
       }
     }).finally(() => setLoaded(true))
     getBlogs();
-    Axios.get(`${API}/getPageAuthor`).then(res => {
+    Axios.get(`${API}/getUser`).then(res => {
       setPageAuthor(res.data)
       setPageTags(sortTagFilters(res.data.tags).slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
       setPageSagas(sortSagaFilters(res.data.sagas).slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
@@ -208,7 +208,7 @@ export default function Home() {
 
   const getCurrentUser = (id: string) => {
     setAuthenticated(true);
-    Axios.get(`${API}/getCurrentUser`, {params: {id: id}}).then(res => {
+    Axios.get(`${API}/getUser`, {params: {id: id}}).then(res => {
       setCurrentUser(res.data)
       setPreBlog(prev => ({ ...prev, author: res.data.name, userId: res.data.id }))
     })
