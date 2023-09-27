@@ -16,12 +16,11 @@ terraform {
 # Define the provider and AWS region
 provider "aws" {
   region     = var.region
-  access_key = var.ACCESS_KEY
-  secret_key = var.SECRET_KEY
+  profile = "finnholland"
 }
 
 data "aws_acm_certificate" "certificate" {
-  domain = "*.finnholland.dev"
+  domain = "finnholland.dev"
   statuses = ["ISSUED"]
 }
 
