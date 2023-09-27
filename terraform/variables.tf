@@ -2,14 +2,6 @@ variable "region" {
   default = "ap-southeast-2"
 }
 
-variable "ACCESS_KEY" {
-  default = ""
-}
-
-variable "SECRET_KEY" {
-  default = ""
-}
-
 variable "name" {
   default = "sagas"
 }
