@@ -1,7 +1,7 @@
 import moment from "moment";
 import { DATE_TYPE, S3_URL } from "./constants";
 import AWS from 'aws-sdk';
-import { ACCESS_KEY_ID, SECRET_ACCESS_KEY } from "./secrets";
+import { ACCESS_KEY, SECRET_ACCESS_KEY } from "./secrets";
 import { Blog, PreBlog, Saga } from "./types";
 import { Dispatch, SetStateAction } from "react";
 
@@ -45,7 +45,7 @@ export const uploadFile = async (name: string, body: File) => {
   const REGION = "ap-southeast-2";
 
   AWS.config.update({
-    accessKeyId: process.env.REACT_APP_ACCESS_KEY || ACCESS_KEY_ID,
+    accessKeyId: process.env.REACT_APP_ACCESS_KEY || ACCESS_KEY,
     secretAccessKey: process.env.REACT_APP_SECRET_KEY || SECRET_ACCESS_KEY,
   });
   const s3 = new AWS.S3({

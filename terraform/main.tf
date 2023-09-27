@@ -9,14 +9,14 @@ terraform {
     bucket = "finnholland"
     region = "ap-southeast-2"
     key    = "sagas.tfstate"
-    profile = "finnholland"
+    profile = "finnholland" # make this your local aws profile.
   }
 }
 
 # Define the provider and AWS region
 provider "aws" {
   region     = var.region
-  profile = "finnholland"
+  profile = "finnholland" # make this your local aws profile.
 }
 
 data "aws_acm_certificate" "certificate" {
@@ -70,7 +70,7 @@ resource "aws_apigatewayv2_api" "api_sagas" {
 }
 
 resource "aws_apigatewayv2_domain_name" "api_domain" {
-  domain_name = "api.finnholland.dev"
+  domain_name = "${var.name}.api.finnholland.dev"
 
   domain_name_configuration {
     certificate_arn = data.aws_acm_certificate.certificate.arn
@@ -87,7 +87,9 @@ resource "aws_apigatewayv2_api_mapping" "api_domain_mapping" {
 
 resource "aws_apigatewayv2_stage" "api_stage" {
   api_id = aws_apigatewayv2_api.api_sagas.id
-  name   = "$default"
+  name   = "default"
+  auto_deploy = true
+  description = "Default API stage for ${var.name}"
 }
 
 resource "aws_apigatewayv2_integration" "api_integ" {
@@ -180,4 +182,20 @@ resource "aws_iam_role" "lambda_role" {
       },
     ]
   })
+}
+
+data "aws_route53_zone" "r53_sagas" {
+  name = "finnholland.dev"
+}
+
+resource "aws_route53_record" "api_record" {
+  zone_id = data.aws_route53_zone.r53_sagas.id
+  name    = "sagas.api.finnholland.dev"
+  type    = "A"
+
+  alias {
+    name    = aws_apigatewayv2_domain_name.api_domain.domain_name_configuration[0].target_domain_name
+    zone_id = aws_apigatewayv2_domain_name.api_domain.domain_name_configuration[0].hosted_zone_id
+    evaluate_target_health = true
+  }
 }
