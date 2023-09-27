@@ -39,6 +39,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@types/react-infinite-scroll-component": "^5.0.0",
     "aws-crt": "^1.18.0",
     "encoding": "^0.1.13"
   }

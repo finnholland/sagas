@@ -17,7 +17,6 @@ import ArrowRight from './assets/ArrowRight';
 import Plus from './assets/Plus';
 import Remove from './assets/Remove';
 import { Saga, User, PreBlog, Blog, FilterBlog } from './types';
-import moment from 'moment';
 import ArrowDown from './assets/ArrowDown';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import GitHub from './assets/logos/GitHub';
