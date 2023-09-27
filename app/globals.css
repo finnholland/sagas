@@ -179,3 +179,7 @@ img {
 .ReactModal__Overlay {
   background-color: #00000020 !important;
 }
+
+.markdown > * {
+  all: revert;
+}

@@ -14,7 +14,7 @@ def lambda_handler(event, context):
         if 'queryStringParameters' in event.keys():
             params = event['queryStringParameters']
             if 'last_evaluated_key' in params.keys() and params['last_evaluated_key'] is not None and params['last_evaluated_key'] != "":
-                last_evaluated_key = event['queryStringParameters']['last_evaluated_key']
+                last_evaluated_key = json.loads(event['queryStringParameters']['last_evaluated_key'])
         if last_evaluated_key:
             response = dynamodb.query(
                 TableName=tableName,

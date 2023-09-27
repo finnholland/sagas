@@ -35,8 +35,6 @@ const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
 let last_evaluated_key: string | null =  null
 let last_evaluated_filter_key: string | null =  null
 
-
-
 const PAGE_SIZE = 5
 let tagsLength = 0;
 let sagasLength = 0;
@@ -273,11 +271,7 @@ export default function Home() {
                 <span className={`${preBlog.tags.length>0 ? '' : 'hidden'} text-sm text-neutral-600 mt-5 mb-1`}>current tags</span>
                 <div className={`${preBlog.tags.length > 0 ? '' : 'hidden'} flex flex-row w-full flex-wrap mb-3`}>
                   {preBlog.tags.map((tag) => (
-                    <div key={tag} onClick={() => addOrRemoveTag({ tag: tag, preBlog: preBlog, setPreBlog: setPreBlog })}
-                      className={`flex-row flex items-center mr-3 mb-2 px-3 py-1 border-1 rounded-full border-sky-300 cursor-pointer select-none ${preBlog.tags.includes(tag) ? 'bg-sky-50' : ''}`}>
-                      <span className='mr-1 text-sky-300'>{tag}</span>
-                      <span>{preBlog.tags.includes(tag) ? <Remove width={15} /> : <Plus width={15} />}</span>
-                    </div>
+                    <BlogTag key={tag} tag={tag} preBlog={preBlog} setPreBlog={setPreBlog}/>
                   ))}
                 </div>
                 <span className='text-sm text-neutral-600 mt-5 mb-1'>previous tags</span>
@@ -431,14 +425,15 @@ const BlogItem: React.FC<BlogProps> = ({ blog, filterSaga, filterTags, setFilter
 
       </div>
       <div className='flex-row flex justify-between'>
-        <span className='text-sm mt-1 mb-3'>{getDateAge(blog.createdAt, DATE_TYPE.BLOG)}</span>
-        <div className='cursor-pointer'>
-          {blog.tags.map((tag) => {
-            return <span className='text-sky-300 underline ml-2' title={`Add ${tag} to filter`} onClick={() => toggleTagFilter({ name: tag, filterTags, setFilterTags })} key={tag}>{tag}</span>
-          })}
-        </div>
+        <span className='text-sm mt-1'>{getDateAge(blog.createdAt, DATE_TYPE.BLOG)}</span>
       </div>
-      <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>
+
+      <ReactMarkdown className='my-5 markdown' remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>
+      <div className='flex-row flex flex-wrap'>
+        {blog.tags.map((tag) => {
+          return <BlogTag key={tag} tag={tag}/>
+        })}
+      </div>
     </div>
   )
 }
@@ -472,3 +467,24 @@ const TagFilter: React.FC<TagProps> = ({ name, filterTags, setFilterTags }) => {
   )
 }
 
+interface BlogTagProps {
+  tag: string
+  preBlog?: PreBlog,
+  setPreBlog?: Dispatch<SetStateAction<PreBlog>>
+}
+const BlogTag: React.FC<BlogTagProps> = ({ tag, preBlog, setPreBlog }) => {
+  if (preBlog && setPreBlog) {
+    return (
+      <div onClick={() => addOrRemoveTag({ tag: tag, preBlog: preBlog, setPreBlog: setPreBlog })}
+        className={`flex-row flex items-center mr-3 mb-2 px-3 py-1 border-1 rounded-full border-sky-300 cursor-pointer select-none ${preBlog.tags.includes(tag) ? 'bg-sky-50' : ''}`}>
+        <span className='mr-1 text-sky-300'>{tag}</span>
+        <span>{preBlog.tags.includes(tag) ? <Remove width={15} /> : <Plus width={15} />}</span>
+      </div>
+    )
+  }
+  return (
+      <div className='flex-row flex items-center mr-3 mb-2 px-3 py-1 border-1 rounded-full border-sky-300 select-none bg-sky-50'>
+        <span className='mr-1 text-sky-300'>{tag}</span>
+      </div>
+  )
+}

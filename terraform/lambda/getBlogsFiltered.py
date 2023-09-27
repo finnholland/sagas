@@ -5,7 +5,6 @@ from boto3.dynamodb.conditions import Key
 tableName = 'sagas'
 indexName = 'type-createdAt-index'
 scanIndexForward=False
-limit=1
 client = boto3.resource('dynamodb').Table(tableName)
 def lambda_handler(event, context):
     query_params = {
@@ -16,19 +15,16 @@ def lambda_handler(event, context):
         'ExpressionAttributeNames': {},
         'ExpressionAttributeValues': {},
         'ScanIndexForward':scanIndexForward,
-        'Limit':limit
     }
     
     filters = None
-    if event['queryStringParameters'] is not None and event['queryStringParameters']['filters'] is not None:
-        filters = json.loads(event['queryStringParameters']['filters'])
-
-    last_evaluated_filter_key = None
-    if event['queryStringParameters'] is not None:
-        last_evaluated_filter_key = event['queryStringParameters'].get('last_evaluated_filter_key')
-        if last_evaluated_filter_key is not None:
-            query_params['ExclusiveStartKey'] = json.loads(last_evaluated_filter_key)
-
+    if 'queryStringParameters' in event.keys():
+        params = event['queryStringParameters']
+        if 'last_evaluated_filter_key' in params.keys() and params['last_evaluated_filter_key'] is not None and params['last_evaluated_filter_key'] != "":
+            query_params['ExclusiveStartKey'] = json.loads(params['last_evaluated_filter_key'])
+        if 'filters' in params.keys() and params['filters'] is not None and params['filters'] != "":
+            filters = json.loads(params['filters'])
+            
     query_params['KeyConditionExpression'] += f'#type = :type'
     query_params['ExpressionAttributeNames'][f'#type'] = 'type'
     query_params['ExpressionAttributeValues'][f':type'] = 'blog'

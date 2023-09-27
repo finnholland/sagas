@@ -18,14 +18,13 @@ def lambda_handler(event, context):
     id  = type + "-" + unique_id + "-" + createdAt
     lowerUserTags = [t.lower() for t in body["userTags"]]
     lowerTags = [t.lower() for t in body["tags"]]
-    lowerUserSagas = [t.lower() for t in body["userSagas"]]
     lowerSaga = body["saga"].lower()
     
     newSagas = []
-    for saga in lowerUserSagas:
+    for saga in body["userSagas"]:
         tempSaga = saga['saga']
         tempUpdated = saga['updated']
-        if saga['saga'] == lowerSaga and saga['updated'] == "":
+        if saga['saga'].lower() == lowerSaga and saga['updated'] == "":
             tempUpdated = createdAt
         newSagas.append({"saga": tempSaga, "updated": tempUpdated})
 
