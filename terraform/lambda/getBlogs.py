@@ -11,9 +11,10 @@ def lambda_handler(event, context):
     scanIndexForward = False
     try:
         last_evaluated_key = None
-        if event['queryStringParameters'] is not None and event['queryStringParameters']['last_evaluated_key'] is not None:
-            last_evaluated_key = json.loads(event['queryStringParameters']['last_evaluated_key'])
-        
+        if 'queryStringParameters' in event.keys():
+            params = event['queryStringParameters']
+            if 'last_evaluated_key' in params.keys() and params['last_evaluated_key'] is not None and params['last_evaluated_key'] != "":
+                last_evaluated_key = event['queryStringParameters']['last_evaluated_key']
         if last_evaluated_key:
             response = dynamodb.query(
                 TableName=tableName,
