@@ -3,7 +3,7 @@ const userPool = {
   "USER_POOL_ID": "ap-southeast-2_CVaA2YJhS",
   "USER_POOL_APP_CLIENT_ID": "3gji2smv1udmuraqqvvuoipr5j"
 }
-const API = 'https://6ybnxhezk9.execute-api.ap-southeast-2.amazonaws.com/default'
+const API = 'https://sagas.api.finnholland.dev'
 const S3_URL = 'https://sagas.s3.ap-southeast-2.amazonaws.com/'
 
 const DATE_TYPE = {

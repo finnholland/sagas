@@ -1,5 +1,5 @@
 'use client'
-import React, { ChangeEvent, Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import Image from 'next/image'
 import "react-markdown-editor-lite/lib/index.css";
 import dynamic from 'next/dynamic';
@@ -19,8 +19,6 @@ import Remove from './assets/Remove';
 import { Saga, User, PreBlog, Blog, FilterBlog } from './types';
 import ArrowDown from './assets/ArrowDown';
 import InfiniteScroll from 'react-infinite-scroll-component';
-import GitHub from './assets/logos/GitHub';
-import LinkedIn from './assets/logos/LinkedIn';
 import Modal from 'react-modal';
 
 Amplify.configure({
