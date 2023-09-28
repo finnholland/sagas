@@ -24,7 +24,11 @@ def lambda_handler(event, context):
             query_params['ExclusiveStartKey'] = json.loads(params['last_evaluated_filter_key'])
         if 'filters' in params.keys() and params['filters'] is not None and params['filters'] != "":
             filters = json.loads(params['filters'])
-            
+    
+    if 'id' in filters.keys():
+        filters['id'] = filters['id'].replace('=', '+')
+
+    
     query_params['KeyConditionExpression'] += f'#type = :type'
     query_params['ExpressionAttributeNames'][f'#type'] = 'type'
     query_params['ExpressionAttributeValues'][f':type'] = 'blog'

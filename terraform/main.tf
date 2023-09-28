@@ -127,6 +127,25 @@ resource "aws_lambda_function" "lambda_functions" {
   timeout          = 3
 }
 
+resource "aws_iam_user" "sagas_user" {
+  name = "${var.name}_user"
+}
+
+resource "aws_iam_user_policy" "s3_write_policy" {
+  user   = aws_iam_user.sagas_user.name
+  name   = "${var.name}_s3_write_policy"
+  policy = jsonencode({
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = "s3:PutObject",
+        Resource = "arn:aws:s3:::sagas*"
+      }
+    ]
+    Version   = "2012-10-17"
+  })
+}
+
 resource "aws_iam_role" "lambda_role" {
   name   = "${var.name}_lambda"
   managed_policy_arns = [
@@ -145,7 +164,8 @@ resource "aws_iam_role" "lambda_role" {
           "dynamodb:Scan",
           "dynamodb:BatchWriteItem",
           "dynamodb:PutItem",
-          "dynamodb:UpdateItem"
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem"
         ],
         Resource = [
           "arn:aws:dynamodb:ap-southeast-2::table/sagas",
