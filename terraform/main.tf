@@ -140,7 +140,12 @@ resource "aws_iam_user_policy" "s3_write_policy" {
         Effect = "Allow",
         Action = "s3:PutObject",
         Resource = "arn:aws:s3:::sagas*"
-      }
+      },
+      {
+        Effect = "Deny",
+        Action = "s3:PutObject",
+        Resource = "arn:aws:s3:::sagas/default_profiles*"
+      },
     ]
     Version   = "2012-10-17"
   })
