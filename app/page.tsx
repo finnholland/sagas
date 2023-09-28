@@ -176,14 +176,12 @@ export default function Home() {
     const stringy = params ? JSON.stringify(params) : ''
     if (filter != '') { 
       Axios.get(`${API}/getBlogsFiltered`, { params: { filters: stringy, last_evaluated_filter_key: filter }}).then(res => {
-        console.log(res.data.items)
         storageArray = blogs;
         setBlogs(res.data.items);
         last_evaluated_filter_key = res.data.last_evaluated_filter_key
       })
     } else {
       Axios.get(`${API}/getBlogsFiltered`, { params: { filters: stringy }}).then(res => {
-        console.log(res.data.items)
         storageArray = blogs;
         setBlogs(res.data.items);
         last_evaluated_filter_key = res.data.last_evaluated_filter_key
