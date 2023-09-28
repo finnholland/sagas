@@ -2,44 +2,33 @@ import json
 import boto3
 from boto3.dynamodb.types import TypeDeserializer
 
-dynamodb = boto3.client('dynamodb')
 tableName = 'sagas'
+dynamodb = boto3.resource('dynamodb').Table(tableName)
 indexName = 'type-createdAt-index'
 deserializer = TypeDeserializer()
 
 def lambda_handler(event, context):
     scanIndexForward = False
     try:
-        last_evaluated_key = None
+                       
+        query_params = {
+            'TableName': tableName,
+            'IndexName': indexName,
+            'KeyConditionExpression': '#type = :type',
+            'ExpressionAttributeNames': {'#type': 'type'},
+            'ExpressionAttributeValues': {':type': 'blog'},
+            'Limit': 5,
+            'ScanIndexForward': scanIndexForward
+        } 
+        
         if 'queryStringParameters' in event.keys():
             params = event['queryStringParameters']
             if 'last_evaluated_key' in params.keys() and params['last_evaluated_key'] is not None and params['last_evaluated_key'] != "":
-                last_evaluated_key = json.loads(event['queryStringParameters']['last_evaluated_key'])
-        if last_evaluated_key:
-            response = dynamodb.query(
-                TableName=tableName,
-                IndexName=indexName,
-                KeyConditionExpression='#type = :type',
-                ExpressionAttributeNames={'#type': 'type'},
-                ExpressionAttributeValues={':type': {'S': 'blog'}},
-                Limit=5,
-                ExclusiveStartKey=last_evaluated_key,
-                ScanIndexForward=scanIndexForward
-            )
-        else:
-            response = dynamodb.query(
-                TableName=tableName,
-                IndexName=indexName,
-                KeyConditionExpression='#type = :type',
-                ExpressionAttributeNames={'#type': 'type'},
-                ExpressionAttributeValues={':type': {'S': 'blog'}},
-                Limit=5,  # Limit the result to 5 records per page
-                ScanIndexForward=scanIndexForward
-            )
+                query_params['ExclusiveStartKey'] = json.loads(params['last_evaluated_key'])
+                
+        response = dynamodb.query(**query_params)
 
-        items = []
-        for item in response['Items']:
-            items.append({k: deserializer.deserialize(v) for k,v in  item.items()})
+        items = response['Items']
         last_evaluated_key = response.get('LastEvaluatedKey')
         # Sort the items by 'createdAt' in descending order (newest first)
         sorted_items = sorted(items, key=lambda x: x['createdAt'], reverse=True)

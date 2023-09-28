@@ -1,9 +1,12 @@
 import moment from "moment";
 import { DATE_TYPE, S3_URL } from "./constants";
-import AWS from 'aws-sdk';
 import { ACCESS_KEY, SECRET_ACCESS_KEY } from "./secrets";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Blog, PreBlog, Saga } from "./types";
 import { Dispatch, SetStateAction } from "react";
+
+const S3_BUCKET = "sagas";
+const REGION = "ap-southeast-2";
 
 export const getDateAge = (createdAt: string, type: string) => {
   const now = moment(new Date()).utcOffset('+0000'); //todays date
@@ -40,41 +43,31 @@ export const getDateAge = (createdAt: string, type: string) => {
   }
 }
 
-export const uploadFile = async (name: string, body: File) => {
-  const S3_BUCKET = "sagas";
-  const REGION = "ap-southeast-2";
 
-  AWS.config.update({
-    accessKeyId: process.env.REACT_APP_ACCESS_KEY || ACCESS_KEY,
-    secretAccessKey: process.env.REACT_APP_SECRET_KEY || SECRET_ACCESS_KEY,
-  });
-  const s3 = new AWS.S3({
-    params: { Bucket: S3_BUCKET },
-    region: REGION,
-  });
+export const uploadFile = async (name: string, body: File) => {
+  const s3Client = new S3Client({
+    region: REGION, credentials: {
+    accessKeyId: ACCESS_KEY, secretAccessKey: SECRET_ACCESS_KEY
+  } });
 
   const params = {
     Bucket: S3_BUCKET,
     Key: name,
     Body: body,
-    ContentType: 'image/jpeg'
+    ContentType: "image/jpeg",
   };
 
-  var upload = s3
-    .putObject(params)
-    .on("httpUploadProgress", (evt) => {
-      console.log(
-        `Uploading ${((evt.loaded * 100) / evt.total)} %`
-      );
-    })
-    .promise();
+  try {
+    const command = new PutObjectCommand(params);
+    await s3Client.send(command);
 
-  await upload.then((err) => {
-    console.log(err);
-  });
-
-  return S3_URL + name
+    return S3_URL + name;
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    throw error;
+  }
 };
+
 
 export const dataURLtoFile = (dataurl: string, filename: string) => {
   const arr = dataurl.split(',');

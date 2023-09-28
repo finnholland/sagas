@@ -20,6 +20,7 @@ import { Saga, User, PreBlog, Blog, FilterBlog } from './types';
 import ArrowDown from './assets/ArrowDown';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import Modal from 'react-modal';
+import MoreDots from './assets/MoreDots';
 
 Amplify.configure({
   Auth: {
@@ -220,18 +221,17 @@ export default function Home() {
   }
 
   const blogItem = blogs?.map((item) => (
-    <BlogItem key={item.id} blog={item} filterSaga={filterSaga} filterTags={filterTags} setFilterSaga={setFilterSaga} setFilterTags={setFilterTags}/>
+    <BlogItem key={item.id} blog={item} owned={item.userId === currentUser.id} />
   ))
 
   if (!loaded) {
     return <div />
   } else {
     return (
-      <div id='#yourAppElement' className=' px-10 flex-1 flex h-full flex-row justify-between items-center'>
+      <div className='px-10 w-2/5 flex-grow-0 h-full flex-row justify-between items-center'>
         <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed left-0 sides top-0 h-fit'>
         </div>
-        <div className='w-1/4'/>
-        <div className='w-1/2 h-full px-16 flex flex-col py-10 no-scrollbar'>
+        <div className='w-full h-full flex flex-col py-10 no-scrollbar'>
           {creatingBlog ? (<div className='mb-10'>
             <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full mb-5'>
               <MdEditor
@@ -271,7 +271,7 @@ export default function Home() {
                 <span className={`${preBlog.tags.length>0 ? '' : 'hidden'} text-sm text-neutral-600 mt-5 mb-1`}>current tags</span>
                 <div className={`${preBlog.tags.length > 0 ? '' : 'hidden'} flex flex-row w-full flex-wrap mb-3`}>
                   {preBlog.tags.map((tag) => (
-                    <BlogTag key={tag} tag={tag} preBlog={preBlog} setPreBlog={setPreBlog}/>
+                    <Bubble key={tag} name={tag} preBlog={preBlog} type='tag' setPreBlog={setPreBlog}/>
                   ))}
                 </div>
                 <span className='text-sm text-neutral-600 mt-5 mb-1'>previous tags</span>
@@ -314,7 +314,6 @@ export default function Home() {
           </InfiniteScroll>
 
         </div>
-        <div className='w-1/4'/>
         <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed right-0 sides top-0 h-fit' >
           <div className='mb-5'>
             <div className='flex flex-row mb-5'>
@@ -409,29 +408,28 @@ export default function Home() {
 
 interface BlogProps {
   blog: Blog
-  filterSaga: string
-  setFilterSaga: Dispatch<SetStateAction<string>>
-  filterTags: string[]
-  setFilterTags: Dispatch<SetStateAction<string[]>>
+  owned: boolean
 }
 
-const BlogItem: React.FC<BlogProps> = ({ blog, filterSaga, filterTags, setFilterSaga, setFilterTags }) => {
+const BlogItem: React.FC<BlogProps> = ({ blog, owned }) => {
   
   return (
     <div className='flex-col flex mb-20'>
-      <div className='flex-row flex justify-between'>
+      <div className='flex-row flex justify-between items-center'>
+      <div className='flex-col flex justify-between'>
         <span className='text-xl font-semibold'>{blog.title}</span>
-        <span onClick={() => toggleSagaFilter({ name: blog.saga, filterSaga, setFilterSaga })} className='font-medium'>{blog.saga}</span>
-
-      </div>
-      <div className='flex-row flex justify-between'>
         <span className='text-sm mt-1'>{getDateAge(blog.createdAt, DATE_TYPE.BLOG)}</span>
+        </div>
+        <div className='flex-row flex items-center'>
+          <Bubble name={blog.saga} type='saga' />
+          {owned ? (<MoreDots className='ml-3 cursor-pointer' width={20} />) : (null)}
+        </div>
       </div>
 
       <ReactMarkdown className='my-5 markdown' remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>
       <div className='flex-row flex flex-wrap'>
         {blog.tags.map((tag) => {
-          return <BlogTag key={tag} tag={tag}/>
+          return <Bubble key={tag} name={tag} type='tag'/>
         })}
       </div>
     </div>
@@ -468,23 +466,30 @@ const TagFilter: React.FC<TagProps> = ({ name, filterTags, setFilterTags }) => {
 }
 
 interface BlogTagProps {
-  tag: string
+  name: string
+  type: string
   preBlog?: PreBlog,
   setPreBlog?: Dispatch<SetStateAction<PreBlog>>
 }
-const BlogTag: React.FC<BlogTagProps> = ({ tag, preBlog, setPreBlog }) => {
+const Bubble: React.FC<BlogTagProps> = ({ name, type, preBlog, setPreBlog }) => {
   if (preBlog && setPreBlog) {
     return (
-      <div onClick={() => addOrRemoveTag({ tag: tag, preBlog: preBlog, setPreBlog: setPreBlog })}
-        className={`flex-row flex items-center mr-3 mb-2 px-3 py-1 border-1 rounded-full border-sky-300 cursor-pointer select-none ${preBlog.tags.includes(tag) ? 'bg-sky-50' : ''}`}>
-        <span className='mr-1 text-sky-300'>{tag}</span>
-        <span>{preBlog.tags.includes(tag) ? <Remove width={15} /> : <Plus width={15} />}</span>
+      <div onClick={() => addOrRemoveTag({ tag: name, preBlog: preBlog, setPreBlog: setPreBlog })}
+        className={`flex-row flex items-center mr-3 mb-2 px-3 py-1 border-1 rounded-full border-sky-300 cursor-pointer select-none ${preBlog.tags.includes(name) ? 'bg-sky-50' : ''}`}>
+        <span className='mr-1 text-sky-300'>{name}</span>
+        <span>{preBlog.tags.includes(name) ? <Remove width={15} /> : <Plus width={15} />}</span>
       </div>
+    )
+  } else if (type === 'tag') {
+    return (
+        <div className='flex-row flex items-center mr-3 mb-2 px-3 py-1 border-1 rounded-full border-sky-300 select-none bg-sky-50'>
+          <span className='mr-1 text-sky-300'>{name}</span>
+        </div>
     )
   }
   return (
-      <div className='flex-row flex items-center mr-3 mb-2 px-3 py-1 border-1 rounded-full border-sky-300 select-none bg-sky-50'>
-        <span className='mr-1 text-sky-300'>{tag}</span>
+      <div className='flex-row flex items-center px-3 py-1 border-1 rounded-full border-fuchsia-300 select-none bg-fuchsia-50'>
+        <span className='mr-1 text-fuchsia-300'>{name}</span>
       </div>
   )
 }

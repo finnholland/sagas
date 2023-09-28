@@ -6,12 +6,12 @@ variable "name" {
   default = "sagas"
 }
 variable "function_count" {
-  default = 5
+  default = 6
 }
 
 variable "function_names" {
   default = [
-    "getUser","createBlog","getBlogsFiltered","getBlogs","cors"
+    "getUser","createBlog","getBlogsFiltered","getBlogs","cors","updateBlog"
   ]
 }
 
