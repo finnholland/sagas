@@ -1,6 +1,5 @@
 import moment from "moment";
 import { DATE_TYPE, S3_URL } from "./constants";
-import { ACCESS_KEY, SECRET_ACCESS_KEY } from "./secrets";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Blog, PreBlog, Saga } from "./types";
 import { Dispatch, SetStateAction } from "react";
@@ -47,7 +46,8 @@ export const getDateAge = (createdAt: string, type: string) => {
 export const uploadFile = async (name: string, body: File) => {
   const s3Client = new S3Client({
     region: REGION, credentials: {
-    accessKeyId: ACCESS_KEY, secretAccessKey: SECRET_ACCESS_KEY
+      accessKeyId: process.env.NEXT_PUBLIC_ACCESS_KEY || '',
+      secretAccessKey: process.env.NEXT_PUBLIC_SECRET_KEY || ''
   } });
 
   const params = {
