@@ -145,8 +145,8 @@ li {
 }
 img {
   border-radius: 20px;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+  display: block;
+  margin: auto;
 }
 
 a {
@@ -156,13 +156,9 @@ a:hover {
   color: #7dd3fc;
   text-decoration: underline;
 }
-img {
-  display: block;
-  margin: auto;
-}
 
 .sides {
-  margin-top: 40px;
+  padding-top: 40px;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */

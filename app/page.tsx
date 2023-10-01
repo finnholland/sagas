@@ -227,7 +227,24 @@ export default function Home() {
   } else {
     return (
       <div className='px-10 w-2/5 flex-grow-0 h-full flex-row justify-between items-center'>
-        <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed left-0 sides top-0 h-fit'>
+        <div className='w-1/4 h-screen flex-3 px-10 justify-end flex flex-col fixed left-0 py-10 top-0'>
+          <div>
+            {authenticated ? (<span className='text-sky-500 underline cursor-pointer' onClick={() => authenticate(false)}>log out</span>) : (
+              <div>
+                <span className='text-sky-500 underline cursor-pointer' onClick={() => setLoggingIn(!loggingIn)}>log in</span>
+                {loggingIn ? (
+                  <div className='flex-col'>
+                    <input value={email} onChange={(e) => setEmail(e.target.value)} className='border-sky-500 border-1 my-2 h-10 rounded-2xl px-4 w-full'/>
+                    <input value={password} type='password' onChange={(e) => setPassword(e.target.value)} className='border-sky-500 border-1 rounded-2xl px-4 h-10 w-full mb-2' />
+                    <div className='flex-row flex w-full justify-between'>
+                      <span className='cursor-pointer' onClick={() => { setLoggingIn(false); setEmail('');  setPassword('')}}>cancel</span>
+                      <span className='cursor-pointer' onClick={() => authenticate(true)}>confirm</span>
+                    </div>
+                  </div>
+                ) : (<div></div>)}
+              </div>
+            )}
+          </div>
         </div>
         <div className='w-full h-full flex flex-col py-10 no-scrollbar'>
           {creatingBlog ? (<div className='mb-10'>
@@ -312,10 +329,10 @@ export default function Home() {
           </InfiniteScroll>
 
         </div>
-        <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed right-0 sides top-0 h-fit' >
+        <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed right-0 sides top-0 h-screen py-10' >
           <div className='mb-5'>
             <div className='flex flex-row mb-5'>
-              <div>
+              <div className='bg-neutral-50'>
                 <Image className='rounded-2xl m-0' src={S3_URL+pageAuthor.id+'.jpg'} alt='profile' width={100} height={100} />
               </div>
               <div className='flex flex-col ml-3 flex-1 justify-center'>
@@ -381,23 +398,6 @@ export default function Home() {
             </div>
 
           </div>
-          <div>
-            {authenticated ? (<span className='text-sky-500 underline cursor-pointer' onClick={() => authenticate(false)}>log out</span>) : (
-              <div>
-                <span className='text-sky-500 underline cursor-pointer' onClick={() => setLoggingIn(!loggingIn)}>log in</span>
-                {loggingIn ? (
-                  <div className='flex-col'>
-                    <input value={email} onChange={(e) => setEmail(e.target.value)} className='border-sky-500 border-1 my-3 rounded-full px-2 w-full'/>
-                    <input value={password} type='password' onChange={(e) => setPassword(e.target.value)} className='border-sky-500 border-1 rounded-full px-2 w-full' />
-                    <div className='flex-row flex w-full justify-between'>
-                      <span className='cursor-pointer' onClick={() => { setLoggingIn(false); setEmail('');  setPassword('')}}>cancel</span>
-                      <span className='cursor-pointer' onClick={() => authenticate(true)}>confirm</span>
-                    </div>
-                  </div>
-                ) : (<div></div>)}
-              </div>
-            )}
-          </div>
         </div>
       </div>
     )
@@ -424,7 +424,7 @@ const BlogItem: React.FC<BlogProps> = ({ blog, owned }) => {
         </div>
       </div>
 
-      <ReactMarkdown className='my-5 markdown' remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>
+      <ReactMarkdown className='markdown' remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>
       <div className='flex-row flex flex-wrap'>
         {blog.tags.map((tag) => {
           return <Bubble key={tag} name={tag} type='tag'/>
