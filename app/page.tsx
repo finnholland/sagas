@@ -42,8 +42,8 @@ let sagasLength = 0;
 let blogsLength = 0;
 let storageArray: Blog[] = []
 export default function Home() {
-  const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: ''})
-  const [pageAuthor, setPageAuthor] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: ''})
+  const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: '', profileImage: ''})
+  const [pageAuthor, setPageAuthor] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: '', profileImage: ''})
   const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: currentUser.id, author: currentUser.name, tags: [], saga: ''});
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [authenticated, setAuthenticated] = useState(false)
@@ -315,8 +315,8 @@ export default function Home() {
         <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed right-0 sides top-0 h-fit' >
           <div className='mb-5'>
             <div className='flex flex-row mb-5'>
-              <div>
-                <Image className='rounded-2xl m-0' src={S3_URL+pageAuthor.id+'.jpg'} alt='profile' width={100} height={100} />
+              <div className='bg-neutral-50'>
+                <Image className='rounded-2xl m-0' src={S3_URL+pageAuthor.profileImage} alt='profile' width={100} height={100} />
               </div>
               <div className='flex flex-col ml-3 flex-1 justify-center'>
                 <div className='justify-between flex-row flex items-center'>
@@ -335,12 +335,14 @@ export default function Home() {
                   <div className='border-b-2 border-b-white w-full py-3 flex mb-3'>
                     <span className='font-bold text-sky-300'>Sagas</span>
                   </div>
-                  
-                  <div className='px-3 w-full'>
-                    {sortSagaFilters(pageSagas).map((saga) => (
-                      <SagaFilter key={saga.saga} name={saga.saga} updated={saga.updated} filterSaga={filterSaga} setFilterSaga={setFilterSaga} />
-                    ))}
-                  </div>
+                  {sagasLength > 0 ? (
+                    <div className='px-3 w-full'>
+                      {sortSagaFilters(pageSagas).map((saga) => (
+                        <SagaFilter key={saga.saga} name={saga.saga} updated={saga.updated} filterSaga={filterSaga} setFilterSaga={setFilterSaga} />
+                      ))}
+                    </div>
+                    ) : (<span className='mb-3 w-full'>no sagas yet!</span>)
+                  }
                 </div>
                 <div className='flex-row flex w-1/3 justify-between items-center'>
                   
@@ -355,11 +357,14 @@ export default function Home() {
                   <div className='border-b-2 border-b-white w-full py-3 flex mb-3'>
                     <span className='font-bold text-sky-300'>Tags</span>
                   </div>
-                  <div className='px-3 w-full'>
-                    {sortTagFilters(pageTags).map((tag) => (
-                      <TagFilter key={tag} name={tag} filterTags={filterTags} setFilterTags={setFilterTags}/>
-                    ))}
-                  </div>
+                  {tagsLength > 0 ? (
+                    <div className='px-3 w-full'>
+                      {sortTagFilters(pageTags).map((tag) => (
+                        <TagFilter key={tag} name={tag} filterTags={filterTags} setFilterTags={setFilterTags}/>
+                      ))}
+                    </div>
+                    ) : (<span className='mb-3 w-full'>no tags yet!</span>)
+                  }
                 </div>
                 <div className='flex-row flex w-1/3 justify-between items-center'>
                   <ArrowLeft className='cursor-pointer' onClick={() => incrementPage('tags', -1)} height={25} stroke={pageNumber.tagPage === 1 ? '#BEBEBE' : '#6ED0D7' } />
@@ -463,13 +468,13 @@ const TagFilter: React.FC<TagProps> = ({ name, filterTags, setFilterTags }) => {
   )
 }
 
-interface BlogTagProps {
+interface Bubble {
   name: string
   type: string
   preBlog?: PreBlog,
   setPreBlog?: Dispatch<SetStateAction<PreBlog>>
 }
-const Bubble: React.FC<BlogTagProps> = ({ name, type, preBlog, setPreBlog }) => {
+const Bubble: React.FC<Bubble> = ({ name, type, preBlog, setPreBlog }) => {
   if (preBlog && setPreBlog) {
     return (
       <div onClick={() => addOrRemoveTag({ tag: name, preBlog: preBlog, setPreBlog: setPreBlog })}
