@@ -54,6 +54,7 @@ export default function Home() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [tag, setTag] = useState('')
+  const [profileImage, setProfileImage] = useState('')
 
   const [pageSagas, setPageSagas] = useState<Saga[]>([]);
   const [pageTags, setPageTags] = useState<string[]>([]);
@@ -95,6 +96,7 @@ export default function Home() {
       setPageSagas(sortSagaFilters(res.data.sagas).slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
       tagsLength = Math.ceil(res.data.tags.length/PAGE_SIZE);
       sagasLength = Math.ceil(res.data.sagas.length / PAGE_SIZE);
+      setProfileImage(res.data.profileImage)
     });
   }, [])
 
@@ -316,7 +318,7 @@ export default function Home() {
           <div className='mb-5'>
             <div className='flex flex-row mb-5'>
               <div className='bg-neutral-50'>
-                <Image className='rounded-2xl m-0' src={S3_URL+pageAuthor.profileImage} alt='profile' width={100} height={100} />
+                <Image className='rounded-2xl m-0' src={S3_URL+profileImage} alt='profile' width={100} height={100} />
               </div>
               <div className='flex flex-col ml-3 flex-1 justify-center'>
                 <div className='justify-between flex-row flex items-center'>
