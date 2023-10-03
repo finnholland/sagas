@@ -5,13 +5,36 @@ variable "region" {
 variable "name" {
   default = "sagas"
 }
-variable "function_count" {
-  default = 6
+variable "env" {
+  default = "prod"
 }
 
 variable "function_names" {
   default = [
-    "getUser","createBlog","getBlogsFiltered","getBlogs","cors","updateBlog"
+    {
+      name  = "getUser"
+      route = "GET /getUser"
+    },
+    {
+      name  = "createBlog"
+      route = "POST /createBlog"
+    },
+    {
+      name  = "getBlogsFiltered"
+      route = "GET /getBlogsFiltered"
+    },
+    {
+      name  = "getBlogs"
+      route = "GET /getBlogs"
+    },
+    {
+      name  = "cors"
+      route = "OPTIONS /{proxy+}"
+    },
+    {
+      name  = "updateBlog"
+      route = "POST /updateBlog"
+    }
   ]
 }
 

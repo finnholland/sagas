@@ -1,7 +1,8 @@
 import json
 import boto3
+import os
 
-tableName="sagas"
+tableName=os.environ.get("tableName")
 client = boto3.resource("dynamodb").Table(tableName)
 type = "blog"
 

@@ -1,11 +1,9 @@
 import moment from "moment";
-import { DATE_TYPE, S3_URL } from "./constants";
+import { DATE_TYPE, REGION, S3_BUCKET, S3_URL } from "./constants";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Blog, PreBlog, Saga } from "./types";
 import { Dispatch, SetStateAction } from "react";
 
-const S3_BUCKET = "sagas";
-const REGION = "ap-southeast-2";
 
 export const getDateAge = (createdAt: string, type: string) => {
   const now = moment(new Date()).utcOffset('+0000'); //todays date
