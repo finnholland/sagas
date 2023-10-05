@@ -6,7 +6,7 @@ const userPool = {
 const ENV = process.env.NEXT_PUBLIC_ENV || 'prod';
 const API = `https://sagas${ENV === 'prod' ? '' : ENV}.api.finnholland.dev`
 const S3_URL = `https://sagas.s3.ap-southeast-2.amazonaws.com/${ENV}/`
-const S3_BUCKET = `sagas/${ENV}/`
+const S3_BUCKET = `sagas`
 const REGION = "ap-southeast-2";
 
 const DATE_TYPE = {
