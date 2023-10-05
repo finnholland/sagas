@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
-import {API, DATE_TYPE, S3_URL} from './constants'
+import {API, DATE_TYPE, ENV, S3_URL} from './constants'
 import { addOrRemoveTag, dataURLtoFile, getDateAge, isEmpty, sortAndReduce, sortSagaFilters, sortTagFilters, toggleSagaFilter, toggleTagFilter, uploadFile } from './helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
@@ -74,7 +74,7 @@ export default function Home() {
       reader.onload = data => {
         if (data.target && data.target.result) {
           if (typeof data.target.result === 'string') {
-            uploadFile('images/'+uuid, dataURLtoFile(data.target.result, 'images/'+uuid)).then(res => resolve(res))
+            uploadFile(dataURLtoFile(data.target.result, ENV+'/images/'+uuid)).then(res => resolve(res))
           }
         }
       };

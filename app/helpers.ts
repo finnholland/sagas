@@ -1,5 +1,5 @@
 import moment from "moment";
-import { DATE_TYPE, REGION, S3_BUCKET, S3_URL } from "./constants";
+import { DATE_TYPE, ENV, REGION, S3_BUCKET, S3_URL } from "./constants";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Blog, PreBlog, Saga } from "./types";
 import { Dispatch, SetStateAction } from "react";
@@ -41,7 +41,7 @@ export const getDateAge = (createdAt: string, type: string) => {
 }
 
 
-export const uploadFile = async (name: string, body: File) => {
+export const uploadFile = async (body: File) => {
   const s3Client = new S3Client({
     region: REGION, credentials: {
       accessKeyId: process.env.NEXT_PUBLIC_ACCESS_KEY || '',
@@ -50,7 +50,7 @@ export const uploadFile = async (name: string, body: File) => {
 
   const params = {
     Bucket: S3_BUCKET,
-    Key: name,
+    Key: body.name,
     Body: body,
     ContentType: "image/jpeg",
   };
@@ -59,7 +59,7 @@ export const uploadFile = async (name: string, body: File) => {
     const command = new PutObjectCommand(params);
     await s3Client.send(command);
 
-    return S3_URL + name;
+    return S3_URL + body.name;
   } catch (error) {
     console.error("Error uploading file:", error);
     throw error;
