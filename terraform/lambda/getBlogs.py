@@ -1,8 +1,8 @@
 import json
 import boto3
 from boto3.dynamodb.types import TypeDeserializer
-
-tableName = 'sagas'
+import os
+tableName=os.environ.get("tableName")
 dynamodb = boto3.resource('dynamodb').Table(tableName)
 indexName = 'type-createdAt-index'
 deserializer = TypeDeserializer()

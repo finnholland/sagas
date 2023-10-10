@@ -2,8 +2,8 @@ import boto3
 import json
 import uuid
 import datetime
-
-tableName="sagas"
+import os
+tableName=os.environ.get("tableName")
 client = boto3.resource("dynamodb")
 table = client.Table(tableName)
 type = "blog"

@@ -8,7 +8,7 @@ terraform {
   backend "s3" { 
     bucket = "finnholland"
     region = "ap-southeast-2"
-    key    = "sagas.tfstate"
+    key    = "sagas_prod.tfstate"
     profile = "finnholland" # make this your local aws profile.
   }
 }
@@ -25,7 +25,7 @@ data "aws_acm_certificate" "certificate" {
 }
 
 resource "aws_dynamodb_table" "ddb_sagas" {
-  name = var.name
+  name = "${var.name}_${var.env}"
   hash_key = "id"
   range_key = "createdAt"
   dynamic "attribute" {
@@ -48,7 +48,7 @@ resource "aws_dynamodb_table" "ddb_sagas" {
 }
 
 resource "aws_apigatewayv2_api" "api_sagas" {
-  name = var.name
+  name = "${var.name}_${var.env}"
   protocol_type = "HTTP"
   description = "Created by AWS Lambda"
   cors_configuration {
@@ -70,7 +70,7 @@ resource "aws_apigatewayv2_api" "api_sagas" {
 }
 
 resource "aws_apigatewayv2_domain_name" "api_domain" {
-  domain_name = "${var.name}.api.finnholland.dev"
+  domain_name = "${var.name}${var.env == "prod" ? "" : var.env}.api.finnholland.dev"
 
   domain_name_configuration {
     certificate_arn = data.aws_acm_certificate.certificate.arn
@@ -89,20 +89,28 @@ resource "aws_apigatewayv2_stage" "api_stage" {
   api_id = aws_apigatewayv2_api.api_sagas.id
   name   = "default"
   auto_deploy = true
-  description = "Default API stage for ${var.name}"
+  description = "Default API stage for ${var.name} ${var.env}"
 }
 
 resource "aws_apigatewayv2_integration" "api_integ" {
-  count = var.function_count
+  count = length(var.function_names)
   api_id           = aws_apigatewayv2_api.api_sagas.id
   integration_type = "AWS_PROXY"
 
   connection_type           = "INTERNET"
-  description               = var.function_names[count.index]
+  description               = "${var.function_names[count.index].name} ${var.env} integration"
   integration_method        = "POST"
   integration_uri           = aws_lambda_function.lambda_functions[count.index].invoke_arn
   passthrough_behavior      = "WHEN_NO_MATCH"
   payload_format_version    = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "api_routes" {
+  count = length(var.function_names)
+  
+  api_id    = aws_apigatewayv2_api.api_sagas.id
+  route_key = var.function_names[count.index].route
+  target    = "integrations/${aws_apigatewayv2_integration.api_integ[count.index].id}"
 }
 
 data "aws_s3_bucket" "s3_sagas" {
@@ -112,47 +120,60 @@ data "aws_s3_bucket" "s3_sagas" {
 data "archive_file" "archive_file" {
   for_each    = { for i, function in var.function_names : i => function }
   type        = "zip"
-  source_file = "${path.module}/lambda/${each.value}.py"
-  output_path = "${each.value}.zip"
+  source_file = "${path.module}/lambda/${each.value.name}.py"
+  output_path = "${each.value.name}.zip"
 }
 
 resource "aws_lambda_function" "lambda_functions" {
-  count            = var.function_count  
-  function_name    = var.function_names[count.index]
-  filename         = "${var.function_names[count.index]}.zip"
+  count            = length(var.function_names)  
+  function_name    = "${var.function_names[count.index].name}_${var.env}"
+  filename         = "${var.function_names[count.index].name}.zip"
   source_code_hash = data.archive_file.archive_file[count.index].output_base64sha256
   role             = aws_iam_role.lambda_role.arn
   runtime          = "python3.11"
-  handler          = "${var.function_names[count.index]}.lambda_handler"
+  handler          = "${var.function_names[count.index].name}.lambda_handler"
   timeout          = 3
+  environment {
+    variables = {
+      tableName = aws_dynamodb_table.ddb_sagas.name
+    }
+  }
+}
+
+resource "aws_lambda_permission" "api_permission" {
+  for_each      = { for i, function in var.function_names : i => function }
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = "${each.value.name}_${var.env}"
+  principal     = "apigateway.amazonaws.com"
 }
 
 resource "aws_iam_user" "sagas_user" {
-  name = "${var.name}_user"
+  name = "${var.name}_user_${var.env}"
 }
 
 resource "aws_iam_user_policy" "s3_write_policy" {
   user   = aws_iam_user.sagas_user.name
-  name   = "${var.name}_s3_write_policy"
+  name   = "${var.name}_s3_write_policy_${var.env}"
   policy = jsonencode({
     Statement = [
       {
-        Effect = "Allow",
-        Action = "s3:PutObject",
-        Resource = "arn:aws:s3:::sagas*"
+        Effect   = "Allow",
+        Action   = "s3:PutObject",
+        Resource = "arn:aws:s3:::sagas/${var.env}*"
       },
       {
-        Effect = "Deny",
-        Action = "s3:PutObject",
+        Effect   = "Deny",
+        Action   = "s3:PutObject",
         Resource = "arn:aws:s3:::sagas/default_profiles*"
       },
     ]
-    Version   = "2012-10-17"
+    Version      = "2012-10-17"
   })
 }
 
 resource "aws_iam_role" "lambda_role" {
-  name   = "${var.name}_lambda"
+  name   = "${var.name}_lambda_${var.env}"
   managed_policy_arns = [
     "arn:aws:iam::653559667045:policy/service-role/AWSLambdaBasicExecutionRole-471ca146-cdc3-4877-916b-29f50dec886d",
   ]
@@ -173,8 +194,8 @@ resource "aws_iam_role" "lambda_role" {
           "dynamodb:DeleteItem"
         ],
         Resource = [
-          "arn:aws:dynamodb:ap-southeast-2:653559667045:table/sagas",
-          "arn:aws:dynamodb:ap-southeast-2:653559667045:table/sagas/index/*"
+          "arn:aws:dynamodb:ap-southeast-2:653559667045:table/${aws_dynamodb_table.ddb_sagas.name}",
+          "arn:aws:dynamodb:ap-southeast-2:653559667045:table/${aws_dynamodb_table.ddb_sagas.name}/index/*"
         ]
       },
       {
@@ -215,7 +236,7 @@ data "aws_route53_zone" "r53_sagas" {
 
 resource "aws_route53_record" "api_record" {
   zone_id = data.aws_route53_zone.r53_sagas.id
-  name    = "sagas.api.finnholland.dev"
+  name    = "sagas${var.env == "prod" ? "" : var.env}.api.finnholland.dev"
   type    = "A"
 
   alias {
