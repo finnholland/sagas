@@ -21,6 +21,7 @@ import ArrowDown from './assets/ArrowDown';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import Modal from 'react-modal';
 import MoreDots from './assets/MoreDots';
+import MdEditor from 'react-markdown-editor-lite';
 
 Amplify.configure({
   Auth: {
@@ -30,9 +31,6 @@ Amplify.configure({
   }
 })
 
-const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
-  ssr: false,
-});
 let last_evaluated_key: string | null =  null
 let last_evaluated_filter_key: string | null =  null
 
@@ -247,8 +245,8 @@ export default function Home() {
           </div>
         </div>
         <div className='w-full h-full flex flex-col py-10 no-scrollbar'>
-          {creatingBlog ? (<div className='mb-10'>
-            <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full mb-5'>
+          {creatingBlog ? (<div className='mb-10 h-full'>
+            <div className='border-sky-300 border-2 rounded-2xl overflow-clip bg-sky-300 flex h-fit mb-5 max-h-9/10'>
               <MdEditor
                 allowPasteImage
                 onImageUpload={handleImageUpload}
@@ -257,7 +255,7 @@ export default function Home() {
                 placeholder='blog loblaw'
                 onChange={handleEditorChange}
                 plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
-                className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500'
+                className='flex flex-grow rounded-2xl border-none max-h-9/10 min-h-500 overflow-scroll'
                 renderHTML={text => <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{text}</ReactMarkdown>}
               />
             </div>
