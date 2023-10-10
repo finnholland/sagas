@@ -33,6 +33,7 @@ export interface User {
   bio: string
   createdAt: string,
   id: string,
+  profileImage: string,
   name: string,
   sagas: Saga[],
   tags: string[],

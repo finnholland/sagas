@@ -1,8 +1,8 @@
 import boto3
 import json
 from boto3.dynamodb.conditions import Key
-
-tableName = 'sagas'
+import os
+tableName=os.environ.get("tableName")
 indexName = 'type-createdAt-index'
 scanIndexForward=False
 client = boto3.resource('dynamodb').Table(tableName)
