@@ -221,6 +221,11 @@ export default function Home() {
     }
   }
 
+  const startCreatingBlog = () => {
+    setCreatingBlog(!creatingBlog);
+    setPreBlog(prev => ({ ...prev, body: currentUser.draft || '' }))
+  }
+
   const blogItem = blogs?.map((item) => (
     <BlogItem key={item.id} blog={item} owned={item.userId === currentUser.id} />
   ))
@@ -251,7 +256,7 @@ export default function Home() {
             <div className='flex-row flex justify-between mt-3'>
               <button onClick={() => setCreatingBlog(false)} className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>cancel</button>
               <div>
-                <button onClick={() => saveDraft()} disabled={preBlog.body !== currentUser.draft} className={`${preBlog.body !== currentUser.draft ? 'bg-sky-300' : 'bg-sky-200'} px-8 mr-3 py-2 rounded-full text-neutral-50 font-bold`}>save</button>
+                <button onClick={() => saveDraft()} disabled={preBlog.body === currentUser.draft} className={`${preBlog.body !== currentUser.draft ? 'bg-sky-300' : 'bg-sky-200'} px-8 mr-3 py-2 rounded-full text-neutral-50 font-bold`}>save</button>
                 <button onClick={() => setIsOpen(true)} disabled={preBlog.body === ''} className={`${preBlog.body === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>confirm</button>
               </div>
             </div>
@@ -336,7 +341,7 @@ export default function Home() {
               </div>
             </div>
             <div className='mb-5'>
-              {authenticated ? <span className='bg-sky-300 flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold cursor-pointer select-none' onClick={() => setCreatingBlog(!creatingBlog)}>{creatingBlog ? 'Cancel' : 'Create Blog'}</span> : (null)}
+              {authenticated ? <span className='bg-sky-300 flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold cursor-pointer select-none' onClick={() => startCreatingBlog()}>{creatingBlog ? 'Cancel' : 'Create Blog'}</span> : (null)}
             </div>
             <div className='mt-2'>
               <div className={`bg-neutral-100 w-full rounded-2xl flex-col flex items-center justify-between pb-4 mb-8 ${sagasLength > 1 ? 'h-72' : ''}`}>
