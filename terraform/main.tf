@@ -35,10 +35,17 @@ resource "aws_dynamodb_table" "ddb_sagas" {
       type = attribute.value["type"]
     }
   }
-  global_secondary_index {
+  global_secondary_index { // for blogs, we know type = blog and 
     name = "type-createdAt-index"
     hash_key = "type"
     range_key = "createdAt"
+    write_capacity = 1
+    read_capacity = 1
+    projection_type = "ALL"
+  }
+  global_secondary_index { // used to get a user by id since the createdAt is not usually known
+    name = "user-index"
+    hash_key = "id"
     write_capacity = 1
     read_capacity = 1
     projection_type = "ALL"
