@@ -42,7 +42,7 @@ let sagasLength = 0;
 let blogsLength = 0;
 let storageArray: Blog[] = []
 export default function Home() {
-  const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: '', profileImage: ''})
+  const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: '', profileImage: '', draft: ''})
   const [pageAuthor, setPageAuthor] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: '', profileImage: ''})
   const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: currentUser.id, author: currentUser.name, tags: [], saga: ''});
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -61,11 +61,6 @@ export default function Home() {
   const [filterSaga, setFilterSaga] = useState('')
   const [filterTags, setFilterTags] = useState<string[]>([])
   const [filtering, setFiltering] = useState(false)
-
-  function handleEditorChange({ html, text }: { html: string, text: string }) {
-    if (html && text)
-      setPreBlog(prev => ({ ...prev, body: text }))
-  }
 
   const handleImageUpload = (file: File) => {
     let uuid = uuidv4();
@@ -89,7 +84,7 @@ export default function Home() {
       }
     }).finally(() => setLoaded(true))
     getBlogs();
-    Axios.get(`${API}/getUser`).then(res => {
+    Axios.get(`${API}/getUser`, {params: {current: false}}).then(res => {
       setPageAuthor(res.data)
       setPageTags(sortTagFilters(res.data.tags).slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
       setPageSagas(sortSagaFilters(res.data.sagas).slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
@@ -114,6 +109,13 @@ export default function Home() {
         blogsLength = Math.ceil(res.data.items.length / PAGE_SIZE);
       });
     }
+  }
+
+  const saveDraft = () => {
+    Axios.post(`${API}/saveDraft`, { ...currentUser, draft: preBlog.body }).then(res => {
+      setPreBlog({ title: '', body: '', userId: currentUser.id, author: currentUser.name, tags: [], saga: '' });
+      setCreatingBlog(false);
+    })
   }
 
   const incrementPage = (type: string, increment: number) => {
@@ -202,9 +204,10 @@ export default function Home() {
 
   const getCurrentUser = (id: string) => {
     setAuthenticated(true);
-    Axios.get(`${API}/getUser`, {params: {id: id}}).then(res => {
+    Axios.get(`${API}/getUser`, {params: {id: id, self: true}}).then(res => {
       setCurrentUser(res.data)
-      setPreBlog(prev => ({ ...prev, author: res.data.name, userId: res.data.id }))
+      setPreBlog(prev => ({ ...prev, author: res.data.name, userId: res.data.id, body: res.data.draft || '' }))
+      console.log(res.data.draft)
     })
   }
 
@@ -233,12 +236,13 @@ export default function Home() {
           {creatingBlog ? (<div className='mb-10'>
             <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full mb-5'>
               <MdEditor
+                value={preBlog.body}
                 allowPasteImage
                 onImageUpload={handleImageUpload}
                 view={{ menu: true, html: false, md: true }}
                 canView={{ menu: true, html: true, both: false, fullScreen: false, hideMenu: false, md: true }}
                 placeholder='blog loblaw'
-                onChange={handleEditorChange}
+                onChange={(text) => setPreBlog(prev => ({ ...prev, body: text.text }))}
                 plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
                 className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500'
                 renderHTML={text => <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{text}</ReactMarkdown>}
@@ -246,7 +250,10 @@ export default function Home() {
             </div>
             <div className='flex-row flex justify-between mt-3'>
               <button onClick={() => setCreatingBlog(false)} className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>cancel</button>
-              <button onClick={() => setIsOpen(true)} disabled={preBlog.body === ''} className={`${preBlog.body === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>confirm</button>
+              <div>
+                <button onClick={() => saveDraft()} disabled={preBlog.body !== currentUser.draft} className={`${preBlog.body !== currentUser.draft ? 'bg-sky-300' : 'bg-sky-200'} px-8 mr-3 py-2 rounded-full text-neutral-50 font-bold`}>save</button>
+                <button onClick={() => setIsOpen(true)} disabled={preBlog.body === ''} className={`${preBlog.body === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>confirm</button>
+              </div>
             </div>
             <Modal isOpen={isOpen} onRequestClose={() => setIsOpen(false)} ariaHideApp={false}
               className='border-0 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 fixed'>
