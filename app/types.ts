@@ -38,6 +38,7 @@ export interface User {
   sagas: Saga[],
   tags: string[],
   type: string
+  draft?: string
 }
 
 export interface Saga {

@@ -34,6 +34,10 @@ variable "function_names" {
     {
       name  = "updateBlog"
       route = "POST /updateBlog"
+    },
+    {
+      name  = "saveDraft"
+      route = "POST /saveDraft"
     }
   ]
 }
