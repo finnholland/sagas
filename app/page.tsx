@@ -141,9 +141,7 @@ export default function Home() {
     let newSagas = currentUser.sagas || [];
     if (!isEmpty(preBlog.saga)) {
       const index = newSagas.findIndex(t => t.saga.toLowerCase() === preBlog.saga.toLowerCase());
-      if (index >= 0) {
-        newSagas[index].updated = '';
-      } else if (index === -1) {
+      if (index === -1) {
         newSagas.push({saga: preBlog.saga, updated: ''})
       }
     }
@@ -161,8 +159,10 @@ export default function Home() {
   }
 
   const getBlogsFiltered = () => {
-    if (filterSaga === '' && filterTags.length === 0) {
+    if (filtering && filterSaga === '' && filterTags.length === 0) {
       clearFilters();
+      return;
+    } else if (!filtering && filterSaga === '' && filterTags.length === 0){
       return
     }
     setFiltering(true);
@@ -391,11 +391,12 @@ export default function Home() {
 
               </div>
               <div className='flex-row flex w-full justify-center mt-5'>
-                <span className='bg-sky-300 flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold cursor-pointer select-none mr-5'
+                <span className={`${!filtering && filterSaga === '' && filterTags.length === 0 ? 'bg-sky-200 cursor-default' : 'bg-sky-300 cursor-pointer'} 
+                flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold select-none mr-5`}
                   onClick={() => getBlogsFiltered()}>
                   Apply
                 </span>
-                <span className={`${filterSaga === '' && filterTags.length === 0 ? 'bg-sky-200' : 'bg-sky-300'}  flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold cursor-pointer select-none ml-5`}
+                <span className={`${filterSaga === '' && filterTags.length === 0 ? 'bg-sky-200 cursor-default' : 'bg-sky-300 cursor-pointer'}  flex justify-center px-8 py-2 rounded-full text-neutral-50 font-bold cursor-pointer select-none ml-5`}
                   onClick={() => clearFilters()}>
                   Clear
                 </span>
