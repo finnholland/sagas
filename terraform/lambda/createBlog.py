@@ -24,7 +24,7 @@ def lambda_handler(event, context):
     for saga in body["userSagas"]:
         tempSaga = saga['saga']
         tempUpdated = saga['updated']
-        if saga['saga'].lower() == lowerSaga and saga['updated'] == "":
+        if tempSaga.lower() == lowerSaga:
             tempUpdated = createdAt
         newSagas.append({"saga": tempSaga, "updated": tempUpdated})
 
@@ -49,7 +49,7 @@ def lambda_handler(event, context):
             TableName=tableName,
             Key={
                 'id': body["userId"],
-                'createdAt': '2023-09-20T00:24:45+00:00'
+                'createdAt': body["createdAt"]
             },
             UpdateExpression="SET tags = :newTags",
             ExpressionAttributeValues={
@@ -61,9 +61,9 @@ def lambda_handler(event, context):
         TableName=tableName,
         Key={
             'id': body["userId"],
-            'createdAt': '2023-09-20T00:24:45+00:00'
+            'createdAt': body["createdAt"]
         },
-        UpdateExpression="SET sagas = :newSagas",
+        UpdateExpression="SET sagas = :newSagas REMOVE draft",
         ExpressionAttributeValues={
             ':newSagas': newSagas
         }
