@@ -75,7 +75,7 @@ export default function Home() {
       reader.onload = data => {
         if (data.target && data.target.result) {
           if (typeof data.target.result === 'string') {
-            uploadFile(dataURLtoFile(data.target.result, ENV+'/images/'+uuid)).then(res => resolve(res))
+            uploadFile(dataURLtoFile(data.target.result, '/images/'+uuid)).then(res => resolve(res))
           }
         }
       };

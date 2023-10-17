@@ -26,5 +26,4 @@ export const deleteBlog = (deleteBlog: boolean, hideBlog: boolean, id: string, c
   } else {
     Axios.post(`${API}/updateBlog`, { hide: hideBlog, id: id, createdAt: createdAt })
   }
-  
 }
