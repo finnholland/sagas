@@ -12,5 +12,6 @@ const REGION = "ap-southeast-2";
 const DATE_TYPE = {
   BLOG: 'BLOG',
   SAGA: 'SAGA',
+  EDIT: 'EDIT',
 }
 export { API, userPool, DATE_TYPE, S3_URL, ENV, S3_BUCKET, REGION }

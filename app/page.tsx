@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
 import {API, DATE_TYPE, ENV, S3_URL} from './constants'
-import { addOrRemoveTag, dataURLtoFile, getDateAge, isEmpty, sortAndReduce, sortSagaFilters, sortTagFilters, toggleSagaFilter, toggleTagFilter, uploadFile } from './helpers';
+import { addOrRemoveTag, dataURLtoFile, editBlog, getDateAge, isEmpty, sortAndReduce, sortSagaFilters, sortTagFilters, toggleSagaFilter, toggleTagFilter, uploadFile } from './helpers/helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,6 +21,8 @@ import ArrowDown from './assets/ArrowDown';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import Modal from 'react-modal';
 import MoreDots from './assets/MoreDots';
+import { api, helpers } from './helpers';
+import { deleteBlog, updateBlog } from './helpers/api';
 
 Amplify.configure({
   Auth: {
@@ -45,11 +47,15 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: '', profileImage: '', draft: ''})
   const [pageAuthor, setPageAuthor] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: '', profileImage: ''})
   const [preBlog, setPreBlog] = useState<PreBlog>({title: '', body: '', userId: currentUser.id, author: currentUser.name, tags: [], saga: ''});
+  const [originalBlog, setOriginalBlog] = useState<Blog | undefined>(undefined);
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [authenticated, setAuthenticated] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [creatingBlog, setCreatingBlog] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+  const [actionModalVisible, setActionModalVisible] = useState(false)
+
   const [loggingIn, setLoggingIn] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -83,7 +89,7 @@ export default function Home() {
         getCurrentUser(res.username)
       }
     }).finally(() => setLoaded(true))
-    getBlogs();
+    
     Axios.get(`${API}/getUser`, {params: {current: false}}).then(res => {
       setPageAuthor(res.data)
       setPageTags(sortTagFilters(res.data.tags).slice((0) * PAGE_SIZE, 1 * PAGE_SIZE));
@@ -93,17 +99,17 @@ export default function Home() {
     });
   }, [])
 
-  const getBlogs = () => {
+  const getBlogs = (userId: string) => {
     const stringy = last_evaluated_key ? JSON.stringify(last_evaluated_key) : ''
     if (stringy != '') {
-      Axios.get(`${API}/getBlogs`, { params: { last_evaluated_key: stringy } }).then(res => {
+      Axios.get(`${API}/getBlogs`, { params: { last_evaluated_key: stringy, userId: userId } }).then(res => {
         const newBlogs = sortAndReduce([...blogs, ...res.data.items])
         setBlogs(newBlogs)
         blogsLength = Math.ceil(newBlogs.length / PAGE_SIZE);
         last_evaluated_key = res.data.last_evaluated_key
       })
     } else {
-      Axios.get(`${API}/getBlogs`).then(res => {
+      Axios.get(`${API}/getBlogs`, { params: { userId: userId } }).then(res => {
         last_evaluated_key = res.data.last_evaluated_key
         setBlogs(res.data.items)
         blogsLength = Math.ceil(res.data.items.length / PAGE_SIZE);
@@ -140,28 +146,33 @@ export default function Home() {
   }
 
   const createBlog = () => {
-    setIsOpen(false);
+    if (isEditing) {
+      updateBlog({ setIsOpen, setPreBlog, preBlog, setOriginalBlog, originalBlog, setCreatingBlog, user: currentUser });
+      setIsEditing(false)
+    } else {
+      setIsOpen(false);
 
-    let newSagas = currentUser.sagas || [];
-    if (!isEmpty(preBlog.saga)) {
-      const index = newSagas.findIndex(t => t.saga.toLowerCase() === preBlog.saga.toLowerCase());
-      if (index >= 0) {
-        newSagas[index].updated = '';
-      } else if (index === -1) {
-        newSagas.push({saga: preBlog.saga, updated: ''})
+      let newSagas = currentUser.sagas || [];
+      if (!isEmpty(preBlog.saga)) {
+        const index = newSagas.findIndex(t => t.saga.toLowerCase() === preBlog.saga.toLowerCase());
+        if (index >= 0) {
+          newSagas[index].updated = '';
+        } else if (index === -1) {
+          newSagas.push({saga: preBlog.saga, updated: ''})
+        }
       }
-    }
 
-    const newTags = preBlog.tags.filter((str: string) => !isEmpty(str));
-    let combinedTags = Array.from(new Set(currentUser.tags.concat(newTags)));
-    if (combinedTags === currentUser.tags) {
-      combinedTags = []
-    }
+      const newTags = preBlog.tags.filter((str: string) => !isEmpty(str));
+      let combinedTags = Array.from(new Set(currentUser.tags.concat(newTags)));
+      if (combinedTags === currentUser.tags) {
+        combinedTags = []
+      }
 
-    Axios.post(`${API}/createBlog`, { ...preBlog, userTags: combinedTags, userSagas: newSagas, createdAt: currentUser.createdAt }).then(res => {
-      setPreBlog({ title: '', body: '', userId: currentUser.id, author: currentUser.name, tags: [], saga: '' });
-      setCreatingBlog(false);
-    })
+      Axios.post(`${API}/createBlog`, { ...preBlog, userTags: combinedTags, userSagas: newSagas, createdAt: currentUser.createdAt }).then(res => {
+        setPreBlog({ title: '', body: '', userId: currentUser.id, author: currentUser.name, tags: [], saga: '' });
+        setCreatingBlog(false);
+      })
+    }
   }
 
   const getBlogsFiltered = () => {
@@ -207,7 +218,8 @@ export default function Home() {
     Axios.get(`${API}/getUser`, {params: {id: id, self: true}}).then(res => {
       setCurrentUser(res.data)
       setPreBlog(prev => ({ ...prev, author: res.data.name, userId: res.data.id, body: res.data.draft || '' }))
-      console.log(res.data.draft)
+      console.log(res.data.draft);
+      getBlogs(res.data.id);
     })
   }
 
@@ -227,7 +239,8 @@ export default function Home() {
   }
 
   const blogItem = blogs?.map((item) => (
-    <BlogItem key={item.id} blog={item} owned={item.userId === currentUser.id} />
+    <BlogItem key={item.id} blog={item} owned={item.userId === currentUser.id} setPreBlog={setPreBlog} setOriginalBlog={setOriginalBlog}
+      setCreatingBlog={setCreatingBlog} setActionModalVisible={setActionModalVisible} setIsEditing={setIsEditing} />
   ))
 
   if (!loaded) {
@@ -236,6 +249,7 @@ export default function Home() {
     return (
       <div className='px-10 w-2/5 flex-grow-0 h-full flex-row justify-between items-center'>
         <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed left-0 sides top-0 h-fit'>
+          {/* <button onClick={() => editBlog(setPreBlog, preBlog)}>edit</button> */}
         </div>
         <div className='w-full h-full flex flex-col py-10 no-scrollbar'>
           {creatingBlog ? (<div className='mb-10'>
@@ -254,9 +268,9 @@ export default function Home() {
               />
             </div>
             <div className='flex-row flex justify-between mt-3'>
-              <button onClick={() => setCreatingBlog(false)} className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>cancel</button>
+              <button onClick={() => { setCreatingBlog(false); setIsEditing(false)}} className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>cancel</button>
               <div>
-                <button onClick={() => saveDraft()} disabled={preBlog.body === currentUser.draft} className={`${preBlog.body !== currentUser.draft ? 'bg-sky-300' : 'bg-sky-200'} px-8 mr-3 py-2 rounded-full text-neutral-50 font-bold`}>save</button>
+                <button hidden={isEditing} onClick={() => saveDraft()} disabled={preBlog.body === currentUser.draft} className={`${preBlog.body !== currentUser.draft ? 'bg-sky-300' : 'bg-sky-200'} px-8 mr-3 py-2 rounded-full text-neutral-50 font-bold`}>save</button>
                 <button onClick={() => setIsOpen(true)} disabled={preBlog.body === ''} className={`${preBlog.body === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>confirm</button>
               </div>
             </div>
@@ -265,17 +279,19 @@ export default function Home() {
               <div className='flex-col flex w-full bg-white p-5 shadow-md rounded-2xl'>
                 <div className='w-full py-1 flex'>
                   <span className='font-bold text-sky-300 mr-3 w-10'>Title</span>
-                  <input className='border-b-neutral-200 border-b-2 focus:border-sky-300 focus:outline-none' type="text" placeholder='title' onChange={(e) => setPreBlog(prev => ({ ...prev, title: e.target.value }))} />
+                  <input className='border-b-neutral-200 border-b-2 focus:border-sky-300 focus:outline-none' value={preBlog.title}
+                    type="text" placeholder='title' onChange={(e) => setPreBlog(prev => ({ ...prev, title: e.target.value }))} />
                 </div>
                 <div className='w-full flex my-6'>
                   <span className='font-bold text-sky-300 mr-3 w-10'>Saga</span>
-                  <input className='border-b-neutral-200 border-b-2 focus:border-sky-300 focus:outline-none' type="text" placeholder='saga' onChange={(e) => setPreBlog(prev => ({ ...prev, saga: e.target.value }))} />
+                  <input disabled={isEditing} className='border-b-neutral-200 border-b-2 focus:border-sky-300 focus:outline-none' value={preBlog.saga}
+                    type="text" placeholder='saga' onChange={(e) => setPreBlog(prev => ({ ...prev, saga: e.target.value }))} />
                 </div>
                 <div className='w-full flex'>
                   <span className='font-bold text-sky-300 mr-3 w-10'>Tags</span>
                   <div className='flex flex-row items-center'>
-                    <input className='border-b-neutral-200 border-b-2 focus:border-sky-300 focus:outline-none mr-3' type="text" placeholder='tag' onChange={(e) => setTag(e.target.value)} />
-                    <Plus onClick={() => { setPreBlog(prev => ({ ...prev, tags: [...prev.tags, tag] })); setTag('') }} width={20}/> 
+                    <input disabled={isEditing} className='border-b-neutral-200 border-b-2 focus:border-sky-300 focus:outline-none mr-3' type="text" placeholder='tag' onChange={(e) => setTag(e.target.value)} />
+                    <Plus onClick={() => { !isEditing ? setPreBlog(prev => ({ ...prev, tags: [...prev.tags, tag] })) : null; setTag('') }} width={20}/> 
                   </div>
                 </div>
                 <span className={`${preBlog.tags.length>0 ? '' : 'hidden'} text-sm text-neutral-600 mt-5 mb-1`}>current tags</span>
@@ -298,21 +314,21 @@ export default function Home() {
                   <button onClick={() => setIsOpen(false) }
                     className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>back</button>
                   <button onClick={() => createBlog()} disabled={preBlog.title === '' || preBlog.saga === ''}
-                    className={`${preBlog.title === '' || preBlog.saga === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>create</button>
+                    className={`${preBlog.title === '' || preBlog.saga === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>{isEditing ? 'update' : 'create'}</button>
                 </div>
               </div>
             </Modal>
 
           </div>) : (null)}
           <InfiniteScroll
-            dataLength={blogs.length}
+            dataLength={blogs?.length || 0}
             next={() => console.log('loading new blogs')}
             hasMore={(last_evaluated_key !== null && !filtering) || (last_evaluated_filter_key !== null && filtering)}
             endMessage={<p className='text-neutral-400 text-center select-none'>no more blogs :(</p>}
             loader={null}
             className='overflow-visible mb-10'>
             {blogItem}
-            <div onClick={() => getBlogs()} className={`cursor-pointer flex-row flex justify-center items-center ${last_evaluated_key === null || filtering ? 'hidden' : ''}`}>
+            <div onClick={() => getBlogs(currentUser.id)} className={`cursor-pointer flex-row flex justify-center items-center ${last_evaluated_key === null || filtering ? 'hidden' : ''}`}>
               <span className='mr-2 text-sky-300'>load more</span>
               <ArrowDown className='cursor-pointer' height={25} stroke='#6ED0D7'/>
             </div>
@@ -426,20 +442,37 @@ export default function Home() {
 interface BlogProps {
   blog: Blog
   owned: boolean
+  setActionModalVisible: Dispatch<SetStateAction<boolean>>
+  setPreBlog: Dispatch<SetStateAction<PreBlog>>
+  setCreatingBlog: Dispatch<SetStateAction<boolean>>
+  setIsEditing: Dispatch<SetStateAction<boolean>>
+  setOriginalBlog: Dispatch<SetStateAction<Blog | undefined>>
 }
 
-const BlogItem: React.FC<BlogProps> = ({ blog, owned }) => {
+const BlogItem: React.FC<BlogProps> = ({ blog, owned, setActionModalVisible, setPreBlog, setCreatingBlog, setIsEditing, setOriginalBlog }) => {
   
   return (
     <div className='flex-col flex mb-20'>
       <div className='flex-row flex justify-between items-center'>
       <div className='flex-col flex justify-between'>
         <span className='text-xl font-semibold'>{blog.title}</span>
-        <span className='text-sm mt-1'>{getDateAge(blog.createdAt, DATE_TYPE.BLOG)}</span>
+        <div className='flex-row'>
+            <span title={blog.editedAt ? getDateAge(blog.editedAt, DATE_TYPE.EDIT) : ''}
+              className='text-sm mt-1'>{getDateAge(blog.createdAt, DATE_TYPE.BLOG)} {blog.editedAt ? '*' : ''}</span>
+        </div>
         </div>
         <div className='flex-row flex items-center'>
           <Bubble name={blog.saga} type='saga' />
-          {owned ? (<MoreDots className='ml-3 cursor-pointer' width={20} />) : (null)}
+          {owned ? (
+            <div className='flex-row flex'>
+              <MoreDots onClick={() => { editBlog({ setPreBlog, blog, setCreatingBlog, setOriginalBlog }); setIsEditing(true) }}
+                className='ml-3 cursor-pointer' width={20} />
+              <span onClick={() => deleteBlog(true, false, blog.id, blog.createdAt)}>del</span>
+              <span onClick={() => deleteBlog(false, blog.visible, blog.id, blog.createdAt)}>hide</span>
+            </div>
+
+          
+          ) : (null)}
         </div>
       </div>
 
