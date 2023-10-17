@@ -53,7 +53,7 @@ export const uploadFile = async (body: File) => {
 
   const params = {
     Bucket: S3_BUCKET,
-    Key: body.name,
+    Key: ENV+body.name,
     Body: body,
     ContentType: "image/jpeg",
   };
