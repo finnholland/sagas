@@ -7,6 +7,7 @@ export interface PreBlog {
   saga: string
 }
 export interface Blog {
+  editedAt: string
   id: string
   createdAt: string
   title: string,

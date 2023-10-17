@@ -1,8 +1,9 @@
 import moment from "moment";
-import { DATE_TYPE, ENV, REGION, S3_BUCKET, S3_URL } from "./constants";
+import { DATE_TYPE, ENV, REGION, S3_BUCKET, S3_URL } from "../constants";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { Blog, PreBlog, Saga } from "./types";
+import { Blog, PreBlog, Saga } from "../types";
 import { Dispatch, SetStateAction } from "react";
+import { editBlogI } from "./interface";
 
 
 export const getDateAge = (createdAt: string, type: string) => {
@@ -35,6 +36,8 @@ export const getDateAge = (createdAt: string, type: string) => {
 
   if (type === DATE_TYPE.SAGA) {
     return ageString;
+  } else if (type === DATE_TYPE.EDIT) {
+    return 'edited - ' + ageString;
   } else {
     return moment(createdAt).format("YYYY/MM/DD") + ' - ' + ageString;
   }
@@ -146,4 +149,19 @@ export const sortAndReduce = (array: Blog[]): Blog[] => {
   blogs.sort((a, b) => moment(b.createdAt, 'YYYY-MM-DDT00:00:00').diff(moment(a.createdAt, 'YYYY-MM-DDT00:00:00')))
 
   return blogs
+}
+
+
+export const editBlog = (props: editBlogI) => {
+  const blog: PreBlog = {
+    title: props.blog.title,
+    body: props.blog.body,
+    userId: props.blog.userId,
+    author: props.blog.author,
+    tags: props.blog.tags,
+    saga: props.blog.saga
+  }
+  props.setPreBlog(blog);
+  props.setCreatingBlog(true)
+  props.setOriginalBlog(props.blog)
 }
