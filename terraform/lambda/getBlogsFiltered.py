@@ -40,8 +40,8 @@ def lambda_handler(event, context):
             for tag_value in param_value:
 
                 # For each tag key-value pair, add a contains condition
-                query_params['FilterExpression'] += f'contains(tags, :{tag_value}) AND '
-                query_params['ExpressionAttributeValues'][f':{tag_value}'] = tag_value
+                query_params['FilterExpression'] += f'contains(tags, :{tag_value.replace("!", "_")}) AND '
+                query_params['ExpressionAttributeValues'][f':{tag_value.replace("!", "_")}'] = tag_value
         elif param_key != 'last_evaluated_filter_key':
             # For other attributes, simply filter by equality
             query_params['FilterExpression'] += f'{param_key} = :{param_key} AND '
