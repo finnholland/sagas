@@ -6,7 +6,7 @@ export interface PreBlog {
   tags: string[],
   saga: string
 }
-export interface Blog {
+export interface BlogI {
   editedAt: string
   id: string
   createdAt: string

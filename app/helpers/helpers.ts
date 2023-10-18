@@ -1,7 +1,7 @@
 import moment from "moment";
 import { DATE_TYPE, ENV, REGION, S3_BUCKET, S3_URL } from "../constants";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { Blog, PreBlog, Saga } from "../types";
+import { BlogI, PreBlog, Saga } from "../types";
 import { Dispatch, SetStateAction } from "react";
 import { editBlogI } from "./interface";
 import { v4 as uuidv4 } from 'uuid';
@@ -139,8 +139,8 @@ export const addOrRemoveTag = ({ tag, preBlog, setPreBlog }: AddOrRemoveTagProps
   }
 }
 
-export const sortAndReduce = (array: Blog[]): Blog[] => {
-  let blogs: Blog[] = array.reduce((unique: Blog[], o) => {
+export const sortAndReduce = (array: BlogI[]): BlogI[] => {
+  let blogs: BlogI[] = array.reduce((unique: BlogI[], o) => {
     if (!unique.some(u => u.id === o.id)) {
       unique.push(o);
     }
