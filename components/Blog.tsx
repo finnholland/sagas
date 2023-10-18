@@ -29,10 +29,11 @@ interface BlogProps {
   pageAuthor: User
   currentUser: User
   setOriginalBlog: Dispatch<SetStateAction<BlogI | undefined>>
+  creatingBlog: boolean
   setCreatingBlog: Dispatch<SetStateAction<boolean>>
 }
 
-export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, blogs, setBlogs, pageAuthor, currentUser, setOriginalBlog, setCreatingBlog }) => {
+export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, blogs, setBlogs, pageAuthor, currentUser, setOriginalBlog, setCreatingBlog, creatingBlog }) => {
   const [eyeHover, setEyeHover] = useState(false)
   const [isOpenBin, setIsOpenBin] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
@@ -68,7 +69,7 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
           {owned ? (
             <div className='flex-row flex pl-3'>
               <Edit className='cursor-pointer' stroke='#3072B4' width={25}
-                onClick={() => { editBlog({ setPreBlog, blog }); setIsEditing(!isEditing) }} />
+                onClick={() => { editBlog({ currentUser, setPreBlog, preBlog, blog, creatingBlog, setCreatingBlog }); setIsEditing(!isEditing) }} />
               {blog.visible && !eyeHover || !blog.visible && eyeHover ?
                 (<Eye className='mx-3 cursor-pointer' stroke='#FF7A00' width={25} 
                   onMouseEnter={() => setEyeHover(true)} onMouseLeave={() => setEyeHover(false)}
@@ -126,7 +127,7 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
               </div>
       </Modal>
       <ModalComponent setIsOpen={setIsOpen} isOpen={isOpen} preBlog={preBlog} setPreBlog={setPreBlog} blogs={blogs}
-      setBlogs={setBlogs} isEditing={isEditing} setIsEditing={setIsEditing} pageAuthor={pageAuthor} currentUser={pageAuthor} orginalBlog={blog}
+      setBlogs={setBlogs} isEditing={isEditing} setIsEditing={setIsEditing} pageAuthor={pageAuthor} currentUser={currentUser} orginalBlog={blog}
       setOriginalBlog={setOriginalBlog} setCreatingBlog={setCreatingBlog} />
     </div>
   )

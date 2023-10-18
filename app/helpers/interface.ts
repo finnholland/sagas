@@ -1,9 +1,13 @@
 import { Dispatch, SetStateAction } from "react";
 import { BlogI, PreBlog, User } from "../types";
 
-export interface editBlogI { 
+export interface editBlogI {
+  currentUser: User
+  preBlog: PreBlog
   setPreBlog: Dispatch<SetStateAction<PreBlog>>
   blog: BlogI
+  creatingBlog: boolean
+  setCreatingBlog: Dispatch<SetStateAction<boolean>>
 }
 export interface updateBlogI { 
   setIsOpen: Dispatch<SetStateAction<boolean>>
