@@ -5,6 +5,7 @@ import { BlogI, PreBlog, Saga } from "../types";
 import { Dispatch, SetStateAction } from "react";
 import { editBlogI } from "./interface";
 import { v4 as uuidv4 } from 'uuid';
+import { saveDraft } from "./api";
 
 export const getDateAge = (createdAt: string, type: string) => {
   const now = moment(new Date()).utcOffset('+0000'); //todays date
@@ -153,6 +154,10 @@ export const sortAndReduce = (array: BlogI[]): BlogI[] => {
 
 
 export const editBlog = (props: editBlogI) => {
+  if (props.creatingBlog) {
+    saveDraft(props.currentUser, props.preBlog.body, props.setPreBlog, props.setCreatingBlog)
+    props.setCreatingBlog(false)
+  }
   const blog: PreBlog = {
     title: props.blog.title,
     body: props.blog.body,

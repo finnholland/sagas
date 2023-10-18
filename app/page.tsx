@@ -26,6 +26,7 @@ import Modal from 'react-modal';
 
 import { Blog, Bubble, SagaFilter, TagFilter } from '@/components';
 import ModalComponent from '@/components/Modal';
+import { saveDraft } from './helpers/api';
 
 Amplify.configure({
   Auth: {
@@ -106,13 +107,6 @@ export default function Home() {
         blogsLength = Math.ceil(res.data.items.length / PAGE_SIZE);
       });
     }
-  }
-
-  const saveDraft = () => {
-    Axios.post(`${API}/saveDraft`, { ...currentUser, draft: preBlog.body }).then(res => {
-      setPreBlog({ title: '', body: '', userId: currentUser.id, author: currentUser.name, tags: [], saga: '' });
-      setCreatingBlog(false);
-    })
   }
 
   const incrementPage = (type: string, increment: number) => {
@@ -201,7 +195,7 @@ export default function Home() {
 
   const blogItem = blogs?.map((item) => (
     <Blog key={item.id} blog={item} owned={item.userId === currentUser.id} setPreBlog={setPreBlog} preBlog={preBlog} setBlogs={setBlogs}
-      blogs={blogs} pageAuthor={pageAuthor} currentUser={currentUser} setOriginalBlog={setOriginalBlog} setCreatingBlog={setCreatingBlog}/>
+      blogs={blogs} pageAuthor={pageAuthor} currentUser={currentUser} setOriginalBlog={setOriginalBlog} creatingBlog={creatingBlog} setCreatingBlog={setCreatingBlog}/>
   ))
 
   if (!loaded) {
@@ -229,7 +223,7 @@ export default function Home() {
             <div className='flex-row flex justify-between mt-3'>
               <button onClick={() => { setCreatingBlog(false); setIsEditing(false)}} className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>cancel</button>
               <div>
-                <button hidden={isEditing} onClick={() => saveDraft()} disabled={preBlog.body === currentUser.draft} className={`${preBlog.body !== currentUser.draft ? 'bg-sky-300' : 'bg-sky-200'} px-8 mr-3 py-2 rounded-full text-neutral-50 font-bold`}>save</button>
+                <button hidden={isEditing} onClick={() => saveDraft(currentUser, preBlog.body, setPreBlog, setCreatingBlog)} disabled={preBlog.body === currentUser.draft} className={`${preBlog.body !== currentUser.draft ? 'bg-sky-300' : 'bg-sky-200'} px-8 mr-3 py-2 rounded-full text-neutral-50 font-bold`}>save</button>
                 <button onClick={() => setIsOpen(true)} disabled={preBlog.body === ''} className={`${preBlog.body === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>confirm</button>
               </div>
             </div>

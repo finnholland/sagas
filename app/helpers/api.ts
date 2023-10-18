@@ -1,6 +1,8 @@
 import Axios from 'axios';
 import { API } from '../constants';
 import { updateBlogI } from './interface';
+import { PreBlog, User } from '../types';
+import { Dispatch, SetStateAction } from 'react';
 
 export const updateBlog = (props: updateBlogI) => {
   if (props.originalBlog !== undefined && props.originalBlog) {
@@ -26,4 +28,11 @@ export const deleteOrHideBlog = async (deleteBlog: boolean, hideBlog: boolean, i
   } else {
     Axios.post(`${API}/updateBlog`, { hide: hideBlog, id: id, createdAt: createdAt })
   }
+}
+
+export const saveDraft = (user: User, body: string, setPreBlog: Dispatch<SetStateAction<PreBlog>>, setCreatingBlog: Dispatch<SetStateAction<boolean>>) => {
+  Axios.post(`${API}/saveDraft`, { ...user, draft: body }).then(res => {
+    setPreBlog({ title: '', body: '', userId: user.id, author: user.name, tags: [], saga: '' });
+    setCreatingBlog(false);
+  })
 }
