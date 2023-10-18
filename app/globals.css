@@ -143,11 +143,6 @@ ol {
 li {
   margin: 0px !important;
 }
-img {
-  border-radius: 20px;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-}
 
 a {
   color: #7dd3fc;
@@ -159,10 +154,13 @@ a:hover {
 img {
   display: block;
   margin: auto;
+  border-radius: 20px;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 
 .sides {
-  margin-top: 40px;
+  padding-top: 40px;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -182,4 +180,22 @@ img {
 
 .markdown > * {
   all: revert;
+}
+
+p code {
+  background-color: #f1f1f1 !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  color: #666;
+  border-radius: 5px !important;
+  color: #9d55a8;
+}
+pre {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  border-radius: 20px !important;
+  background-color: #f1f1f1 !important;
+}
+pre code {
+  background-color: transparent !important;
 }
