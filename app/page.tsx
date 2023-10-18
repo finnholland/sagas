@@ -85,11 +85,11 @@ export default function Home() {
     Auth.currentAuthenticatedUser().then((res) => {
       if (res != undefined) {
         getCurrentUser(res.username)
+        getBlogs(res.username);
       }
     }).finally(() => {
       setLoaded(true)
-      getBlogs(currentUser.id || '');
-    })
+    }).catch(() => getBlogs(''))
     
     Axios.get(`${API}/getUser`, {params: {current: false}}).then(res => {
       setPageAuthor(res.data)
@@ -322,7 +322,8 @@ export default function Home() {
             next={() => console.log('loading new blogs')}
             hasMore={(last_evaluated_key !== null && !filtering) || (last_evaluated_filter_key !== null && filtering)}
             endMessage={<p className='text-neutral-400 text-center select-none'>no more blogs :(</p>}
-            loader={null}
+            loader={!loaded ?'loading...' : ''}
+            
             className='overflow-visible mb-10'>
             {blogItem}
             <div onClick={() => getBlogs(currentUser.id)} className={`cursor-pointer flex-row flex justify-center items-center ${last_evaluated_key === null || filtering ? 'hidden' : ''}`}>
@@ -496,8 +497,8 @@ const BlogItem: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, blogs
           ) : (null)}
         </div>
       </div>
-      {isEditing ? (<div className='mb-10'>
-            <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full mb-5'>
+      {isEditing ? (<div className={`${blog.tags.length > 0 ? 'mb-10' : ''}`}>
+            <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full my-5'>
               <MdEditor
                 value={preBlog.body}
                 allowPasteImage
@@ -517,7 +518,7 @@ const BlogItem: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, blogs
                 {/* <button hidden={isEditing} onClick={() => saveDraft()} disabled={preBlog.body === currentUser.draft} className={`${preBlog.body !== currentUser.draft ? 'bg-sky-300' : 'bg-sky-200'} px-8 mr-3 py-2 rounded-full text-neutral-50 font-bold`}>save</button> */}
                 <button onClick={() => setIsOpen(true)} disabled={preBlog.body === ''} className={`${preBlog.body === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>confirm</button>
               </div>
-            </div></div>) : (<ReactMarkdown className='my-5 markdown' remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>)}
+            </div></div>) : (<ReactMarkdown className={`${blog.tags.length > 0 ? 'mb-5' : ''} markdown`} remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>)}
       
       <div className='flex-row flex flex-wrap'>
         {blog.tags.map((tag) => {
