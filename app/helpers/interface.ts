@@ -3,8 +3,6 @@ import { Blog, PreBlog, User } from "../types";
 
 export interface editBlogI { 
   setPreBlog: Dispatch<SetStateAction<PreBlog>>
-  setCreatingBlog: Dispatch<SetStateAction<boolean>>
-  setOriginalBlog: Dispatch<SetStateAction<Blog | undefined>>
   blog: Blog
 }
 export interface updateBlogI { 

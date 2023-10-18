@@ -40,10 +40,17 @@ def lambda_handler(event, context):
             ExpressionAttributeValues=expression_attribute_values,
             # You can add ConditionExpression or other parameters as needed
         )
-    else:    
+    elif 'delete' in body.keys() and body['delete']:
         response = client.delete_item(
             Key=key,
-            # You can add ConditionExpression or other parameters as needed
+        )
+    elif 'hide' in body.keys() and body['hide'] is not None:
+        response = client.update_item(
+            Key=key,
+            UpdateExpression="SET visible = :visible",
+            ExpressionAttributeValues= {
+                ":visible": body['hide']
+            }
         )
     return {
         'statusCode': response['ResponseMetadata']['HTTPStatusCode'],

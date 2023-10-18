@@ -4,7 +4,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Blog, PreBlog, Saga } from "../types";
 import { Dispatch, SetStateAction } from "react";
 import { editBlogI } from "./interface";
-
+import { v4 as uuidv4 } from 'uuid';
 
 export const getDateAge = (createdAt: string, type: string) => {
   const now = moment(new Date()).utcOffset('+0000'); //todays date
@@ -53,7 +53,7 @@ export const uploadFile = async (body: File) => {
 
   const params = {
     Bucket: S3_BUCKET,
-    Key: ENV+body.name,
+    Key: ENV+'/'+body.name,
     Body: body,
     ContentType: "image/jpeg",
   };
@@ -162,6 +162,19 @@ export const editBlog = (props: editBlogI) => {
     saga: props.blog.saga
   }
   props.setPreBlog(blog);
-  props.setCreatingBlog(true)
-  props.setOriginalBlog(props.blog)
 }
+
+export const handleImageUpload = (file: File) => {
+  let uuid = uuidv4();
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = data => {
+      if (data.target && data.target.result) {
+        if (typeof data.target.result === 'string') {
+          uploadFile(dataURLtoFile(data.target.result, 'images/' + uuid)).then(res => resolve(res))
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+};
