@@ -8,10 +8,17 @@ import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
 import {API, DATE_TYPE, ENV, S3_URL} from './constants'
-import { addOrRemoveTag, dataURLtoFile, editBlog, getDateAge, isEmpty, sortAndReduce, sortSagaFilters, sortTagFilters, toggleSagaFilter, toggleTagFilter, uploadFile } from './helpers/helpers';
+import {
+  addOrRemoveTag,
+  dataURLtoFile, editBlog,
+  getDateAge, isEmpty,
+  sortAndReduce, sortSagaFilters,
+  sortTagFilters, toggleSagaFilter,
+  toggleTagFilter, handleImageUpload
+} from './helpers/helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
-import { v4 as uuidv4 } from 'uuid';
+
 import ArrowLeft from './assets/ArrowLeft';
 import ArrowRight from './assets/ArrowRight';
 import Plus from './assets/Plus';
@@ -22,7 +29,11 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 import Modal from 'react-modal';
 import MoreDots from './assets/MoreDots';
 import { api, helpers } from './helpers';
-import { deleteBlog, updateBlog } from './helpers/api';
+import { deleteOrHideBlog, updateBlog } from './helpers/api';
+import Edit from './assets/Edit';
+import Eye from './assets/Eye';
+import Bin from './assets/Bin';
+import EyeOff from './assets/EyeOff';
 
 Amplify.configure({
   Auth: {
@@ -68,27 +79,17 @@ export default function Home() {
   const [filterTags, setFilterTags] = useState<string[]>([])
   const [filtering, setFiltering] = useState(false)
 
-  const handleImageUpload = (file: File) => {
-    let uuid = uuidv4();
-    return new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onload = data => {
-        if (data.target && data.target.result) {
-          if (typeof data.target.result === 'string') {
-            uploadFile(dataURLtoFile(data.target.result, '/images/'+uuid)).then(res => resolve(res))
-          }
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-  };
+
 
   useEffect(() => {
     Auth.currentAuthenticatedUser().then((res) => {
       if (res != undefined) {
         getCurrentUser(res.username)
       }
-    }).finally(() => setLoaded(true))
+    }).finally(() => {
+      setLoaded(true)
+      getBlogs(currentUser.id || '');
+    })
     
     Axios.get(`${API}/getUser`, {params: {current: false}}).then(res => {
       setPageAuthor(res.data)
@@ -147,7 +148,7 @@ export default function Home() {
 
   const createBlog = () => {
     if (isEditing) {
-      updateBlog({ setIsOpen, setPreBlog, preBlog, setOriginalBlog, originalBlog, setCreatingBlog, user: currentUser });
+      updateBlog({ setIsOpen, setPreBlog, originalBlog, preBlog, setOriginalBlog, setCreatingBlog, user: currentUser });
       setIsEditing(false)
     } else {
       setIsOpen(false);
@@ -218,8 +219,6 @@ export default function Home() {
     Axios.get(`${API}/getUser`, {params: {id: id, self: true}}).then(res => {
       setCurrentUser(res.data)
       setPreBlog(prev => ({ ...prev, author: res.data.name, userId: res.data.id, body: res.data.draft || '' }))
-      console.log(res.data.draft);
-      getBlogs(res.data.id);
     })
   }
 
@@ -239,8 +238,8 @@ export default function Home() {
   }
 
   const blogItem = blogs?.map((item) => (
-    <BlogItem key={item.id} blog={item} owned={item.userId === currentUser.id} setPreBlog={setPreBlog} setOriginalBlog={setOriginalBlog}
-      setCreatingBlog={setCreatingBlog} setActionModalVisible={setActionModalVisible} setIsEditing={setIsEditing} />
+    <BlogItem key={item.id} blog={item} owned={item.userId === currentUser.id} setPreBlog={setPreBlog}
+      preBlog={preBlog} setBlogs={setBlogs} blogs={blogs} />
   ))
 
   if (!loaded) {
@@ -248,9 +247,7 @@ export default function Home() {
   } else {
     return (
       <div className='px-10 w-2/5 flex-grow-0 h-full flex-row justify-between items-center'>
-        <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed left-0 sides top-0 h-fit'>
-          {/* <button onClick={() => editBlog(setPreBlog, preBlog)}>edit</button> */}
-        </div>
+        <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed left-0 sides top-0 h-fit'/>
         <div className='w-full h-full flex flex-col py-10 no-scrollbar'>
           {creatingBlog ? (<div className='mb-10'>
             <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full mb-5'>
@@ -263,7 +260,7 @@ export default function Home() {
                 placeholder='blog loblaw'
                 onChange={(text) => setPreBlog(prev => ({ ...prev, body: text.text }))}
                 plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
-                className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500'
+                className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500 max-w-full'
                 renderHTML={text => <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{text}</ReactMarkdown>}
               />
             </div>
@@ -442,15 +439,32 @@ export default function Home() {
 interface BlogProps {
   blog: Blog
   owned: boolean
-  setActionModalVisible: Dispatch<SetStateAction<boolean>>
+  preBlog: PreBlog
   setPreBlog: Dispatch<SetStateAction<PreBlog>>
-  setCreatingBlog: Dispatch<SetStateAction<boolean>>
-  setIsEditing: Dispatch<SetStateAction<boolean>>
-  setOriginalBlog: Dispatch<SetStateAction<Blog | undefined>>
+  blogs: Blog[]
+  setBlogs: Dispatch<SetStateAction<Blog[]>>
 }
 
-const BlogItem: React.FC<BlogProps> = ({ blog, owned, setActionModalVisible, setPreBlog, setCreatingBlog, setIsEditing, setOriginalBlog }) => {
-  
+const BlogItem: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, blogs, setBlogs }) => {
+  const [eyeHover, setEyeHover] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+
+  const toggleVisibility = (state: boolean) => {
+    setEyeHover(state);
+    const tempBlogs = blogs;
+    tempBlogs[blogs.findIndex(b => b.id === blog.id)].visible = state;
+    setBlogs(tempBlogs);
+    deleteOrHideBlog(false, blog.visible, blog.id, blog.createdAt)
+  }
+  const deleteBlog = () => {
+    console.log("deleted!")
+    const tempBlogs = blogs.filter(b => b.id !== blog.id);
+    setBlogs(tempBlogs);
+    setIsOpen(false);
+    // deleteBlog(true, false, blog.id, blog.createdAt)
+  }
+
   return (
     <div className='flex-col flex mb-20'>
       <div className='flex-row flex justify-between items-center'>
@@ -464,24 +478,65 @@ const BlogItem: React.FC<BlogProps> = ({ blog, owned, setActionModalVisible, set
         <div className='flex-row flex items-center'>
           <Bubble name={blog.saga} type='saga' />
           {owned ? (
-            <div className='flex-row flex'>
-              <MoreDots onClick={() => { editBlog({ setPreBlog, blog, setCreatingBlog, setOriginalBlog }); setIsEditing(true) }}
-                className='ml-3 cursor-pointer' width={20} />
-              <span onClick={() => deleteBlog(true, false, blog.id, blog.createdAt)}>del</span>
-              <span onClick={() => deleteBlog(false, blog.visible, blog.id, blog.createdAt)}>hide</span>
+            <div className='flex-row flex pl-3'>
+              <Edit className='cursor-pointer' stroke='#3072B4' width={25}
+                onClick={() => { editBlog({ setPreBlog, blog }); setIsEditing(!isEditing) }} />
+              {blog.visible && !eyeHover || !blog.visible && eyeHover ?
+                (<Eye className='mx-3 cursor-pointer' stroke='#FF7A00' width={25} 
+                  onMouseEnter={() => setEyeHover(true)} onMouseLeave={() => setEyeHover(false)}
+                  onClick={() => toggleVisibility(true)} />) :
+                (<EyeOff className='mx-3 cursor-pointer' stroke='#FF7A00' width={25}
+                  onMouseEnter={() => setEyeHover(true)} onMouseLeave={() => setEyeHover(false)}
+                  onClick={() => toggleVisibility(false)} />)}
+              <Bin className='cursor-pointer' stroke='#dc2626' width={25}
+                onClick={() => setIsOpen(true)} />
+              {/* <MoreDots onClick={() => { editBlog({ setPreBlog, blog, setCreatingBlog, setOriginalBlog }); setIsEditing(true) }}
+                className='ml-3 cursor-pointer' width={20} /> */}
             </div>
-
-          
           ) : (null)}
         </div>
       </div>
-
-      <ReactMarkdown className='my-5 markdown' remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>
+      {isEditing ? (<div className='mb-10'>
+            <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full mb-5'>
+              <MdEditor
+                value={preBlog.body}
+                allowPasteImage
+                onImageUpload={handleImageUpload}
+                view={{ menu: true, html: false, md: true }}
+                canView={{ menu: true, html: true, both: false, fullScreen: false, hideMenu: false, md: true }}
+                placeholder='blog loblaw'
+                onChange={(text) => setPreBlog(prev => ({ ...prev, body: text.text }))}
+                plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
+                className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500 max-w-full'
+                renderHTML={text => <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{text}</ReactMarkdown>}
+              />
+            </div>
+            <div className='flex-row flex justify-between mt-3'>
+              <button onClick={() => { setIsEditing(false)}} className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>cancel</button>
+              <div>
+                {/* <button hidden={isEditing} onClick={() => saveDraft()} disabled={preBlog.body === currentUser.draft} className={`${preBlog.body !== currentUser.draft ? 'bg-sky-300' : 'bg-sky-200'} px-8 mr-3 py-2 rounded-full text-neutral-50 font-bold`}>save</button> */}
+                <button onClick={() => setIsOpen(true)} disabled={preBlog.body === ''} className={`${preBlog.body === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>confirm</button>
+              </div>
+            </div></div>) : (<ReactMarkdown className='my-5 markdown' remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>)}
+      
       <div className='flex-row flex flex-wrap'>
         {blog.tags.map((tag) => {
           return <Bubble key={tag} name={tag} type='tag'/>
         })}
       </div>
+      <Modal isOpen={isOpen} onRequestClose={() => setIsOpen(false)} ariaHideApp={false}
+              className='border-0 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 fixed focus-visible:outline-none'>
+              <div className='flex-col flex w-full bg-white p-8 shadow-md rounded-2xl'>
+          <p>{`Delete blog "${blog.title}" ? This cannot be undone`}</p>
+          <div className='flex flex-row items-center h-12 justify-between mt-3'>
+            <span className='cursor-pointer border-2 border-red-600 rounded-full w-28 p-2 text-center font-medium text-red-600'
+              onClick={() => deleteBlog()}>yes</span>
+            <span className='cursor-pointer border-2 border-sky-300 rounded-full w-28 p-2 text-center font-medium text-sky-300'
+              onClick={() => setIsOpen(false)}>no</span>
+          </div>
+
+              </div>
+            </Modal>
     </div>
   )
 }

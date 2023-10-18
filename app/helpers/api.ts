@@ -20,7 +20,7 @@ export const updateBlog = (props: updateBlogI) => {
   }
 }
 
-export const deleteBlog = (deleteBlog: boolean, hideBlog: boolean, id: string, createdAt: string) => {
+export const deleteOrHideBlog = async (deleteBlog: boolean, hideBlog: boolean, id: string, createdAt: string) => {
   if (deleteBlog) {
     Axios.post(`${API}/updateBlog`, { delete: true, id: id, createdAt: createdAt })
   } else {
