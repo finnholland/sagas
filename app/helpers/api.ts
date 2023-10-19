@@ -26,13 +26,10 @@ export const deleteOrHideBlog = async (deleteBlog: boolean, hideBlog: boolean, i
   if (deleteBlog) {
     Axios.post(`${API}/updateBlog`, { delete: true, id: id, createdAt: createdAt })
   } else {
-    Axios.post(`${API}/updateBlog`, { hide: hideBlog, id: id, createdAt: createdAt })
+    Axios.post(`${API}/updateBlog`, { hide: !hideBlog, id: id, createdAt: createdAt })
   }
 }
 
-export const saveDraft = (user: User, body: string, setPreBlog: Dispatch<SetStateAction<PreBlog>>, setCreatingBlog: Dispatch<SetStateAction<boolean>>) => {
-  Axios.post(`${API}/saveDraft`, { ...user, draft: body }).then(res => {
-    setPreBlog({ title: '', body: '', userId: user.id, author: user.name, tags: [], saga: '' });
-    setCreatingBlog(false);
-  })
+export const saveDraft = async (user: User, body: string) => {
+  Axios.post(`${API}/saveDraft`, { ...user, draft: body })
 }

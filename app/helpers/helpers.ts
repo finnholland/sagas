@@ -155,8 +155,10 @@ export const sortAndReduce = (array: BlogI[]): BlogI[] => {
 
 export const editBlog = (props: editBlogI) => {
   if (props.creatingBlog) {
-    saveDraft(props.currentUser, props.preBlog.body, props.setPreBlog, props.setCreatingBlog)
-    props.setCreatingBlog(false)
+    saveDraft(props.currentUser, props.preBlog.body).then(res => {
+      props.setPreBlog({ title: '', body: '', userId: props.currentUser.id, author: props.currentUser.name, tags: [], saga: '' });
+      props.setCreatingBlog(false);
+    })
   }
   const blog: PreBlog = {
     title: props.blog.title,

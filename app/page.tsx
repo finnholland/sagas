@@ -2,30 +2,23 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image'
 import "react-markdown-editor-lite/lib/index.css";
-import dynamic from 'next/dynamic';
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import 'github-markdown-css/github-markdown-light.css'
 import Axios from 'axios';
 import {API, S3_URL} from './constants'
 import {
-  addOrRemoveTag, editBlog, getDateAge, isEmpty,
   sortAndReduce, sortSagaFilters,
-  sortTagFilters, handleImageUpload
+  sortTagFilters
 } from './helpers/helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
 
 import ArrowLeft from './assets/ArrowLeft';
 import ArrowRight from './assets/ArrowRight';
-import Plus from './assets/Plus';
 import { Saga, User, PreBlog, BlogI, FilterBlog } from './types';
 import ArrowDown from './assets/ArrowDown';
 import InfiniteScroll from 'react-infinite-scroll-component';
-import Modal from 'react-modal';
 
-import { Blog, Bubble, SagaFilter, TagFilter } from '@/components';
-import ModalComponent from '@/components/Modal';
+import { Blog, MdEditor, SagaFilter, TagFilter } from '@/components';
 import { saveDraft } from './helpers/api';
 
 Amplify.configure({
@@ -36,9 +29,6 @@ Amplify.configure({
   }
 })
 
-const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
-  ssr: false,
-});
 let last_evaluated_key: string | null =  null
 let last_evaluated_filter_key: string | null =  null
 
@@ -57,7 +47,6 @@ export default function Home() {
   const [loaded, setLoaded] = useState(false)
   const [creatingBlog, setCreatingBlog] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [isOpen, setIsOpen] = useState(false)
 
   const [loggingIn, setLoggingIn] = useState(false)
   const [email, setEmail] = useState('')
@@ -205,32 +194,11 @@ export default function Home() {
       <div className='px-10 w-2/5 flex-grow-0 h-full flex-row justify-between items-center'>
         <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed left-0 sides top-0 h-fit'/>
         <div className='w-full h-full flex flex-col py-10 no-scrollbar'>
-          {creatingBlog ? (<div className='mb-10'>
-            <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full mb-5'>
-              <MdEditor
-                value={preBlog.body}
-                allowPasteImage
-                onImageUpload={handleImageUpload}
-                view={{ menu: true, html: false, md: true }}
-                canView={{ menu: true, html: true, both: false, fullScreen: false, hideMenu: false, md: true }}
-                placeholder='blog loblaw'
-                onChange={(text) => setPreBlog(prev => ({ ...prev, body: text.text }))}
-                plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
-                className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500 max-w-full'
-                renderHTML={text => <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{text}</ReactMarkdown>}
-              />
-            </div>
-            <div className='flex-row flex justify-between mt-3'>
-              <button onClick={() => { setCreatingBlog(false); setIsEditing(false)}} className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>cancel</button>
-              <div>
-                <button hidden={isEditing} onClick={() => saveDraft(currentUser, preBlog.body, setPreBlog, setCreatingBlog)} disabled={preBlog.body === currentUser.draft} className={`${preBlog.body !== currentUser.draft ? 'bg-sky-300' : 'bg-sky-200'} px-8 mr-3 py-2 rounded-full text-neutral-50 font-bold`}>save</button>
-                <button onClick={() => setIsOpen(true)} disabled={preBlog.body === ''} className={`${preBlog.body === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>confirm</button>
-              </div>
-            </div>
-            <ModalComponent setIsOpen={setIsOpen} isOpen={isOpen} preBlog={preBlog} setPreBlog={setPreBlog} blogs={blogs}
-              setBlogs={setBlogs} isEditing={isEditing} setIsEditing={setIsEditing} pageAuthor={pageAuthor} currentUser={currentUser} orginalBlog={originalBlog}
-              setOriginalBlog={setOriginalBlog} setCreatingBlog={setCreatingBlog} />
-          </div>) : (null)}
+          {creatingBlog ? (
+            <MdEditor preBlog={preBlog} setPreBlog={setPreBlog} isEditing={isEditing} setIsEditing={setIsEditing}
+              currentUser={currentUser} setCreatingBlog={setCreatingBlog} setCurrentUser={setCurrentUser}
+              pageAuthor={pageAuthor} setBlogs={setBlogs} blogs={blogs} originalBlog={originalBlog} setOriginalBlog={setOriginalBlog}/>
+          ) : (null)}
           <InfiniteScroll
             dataLength={blogs?.length || 0}
             next={() => console.log('loading new blogs')}

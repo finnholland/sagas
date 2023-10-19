@@ -10,7 +10,8 @@ deserializer = TypeDeserializer()
 def lambda_handler(event, context):
     scanIndexForward = False
     try:
-                       
+            
+        id = ''           
         query_params = {
             'TableName': tableName,
             'IndexName': indexName,
@@ -25,13 +26,21 @@ def lambda_handler(event, context):
             params = event['queryStringParameters']
             if 'last_evaluated_key' in params.keys() and params['last_evaluated_key'] is not None and params['last_evaluated_key'] != "":
                 query_params['ExclusiveStartKey'] = json.loads(params['last_evaluated_key'])
+            if 'userId' in params.keys() and params['userId'] is not None and params['userId'] != "":
+                id = params['userId']
+
                 
         response = dynamodb.query(**query_params)
 
         items = response['Items']
         last_evaluated_key = response.get('LastEvaluatedKey')
+        
+        filtered_posts = [post for post in items if post["visible"] or post["userId"] == id]
+        
         # Sort the items by 'createdAt' in descending order (newest first)
-        sorted_items = sorted(items, key=lambda x: x['createdAt'], reverse=True)
+        sorted_items = sorted(filtered_posts, key=lambda x: x['createdAt'], reverse=True)
+        
+        
 
         # Return the sorted items as the response
         return {
