@@ -49,7 +49,7 @@ def lambda_handler(event, context):
 
     if query_params['FilterExpression'].endswith(' AND '):
         query_params['FilterExpression'] = query_params['FilterExpression'][:-5]
-    
+
 
     response = client.query(**query_params)
     print(response)

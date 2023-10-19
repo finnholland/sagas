@@ -38,20 +38,26 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
   const [isOpenBin, setIsOpenBin] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  
+  const [editColour, setEditColour] = useState('#9C9C9C')
+  const [eyeColour, setEyeColour] = useState('#9C9C9C')
+  const [binColour, setBinColour] = useState('#9C4F58')
 
   const toggleVisibility = (state: boolean) => {
-    setEyeHover(state);
-    const tempBlogs = blogs;
-    tempBlogs[blogs.findIndex(b => b.id === blog.id)].visible = state;
-    setBlogs(tempBlogs);
-    deleteOrHideBlog(false, blog.visible, blog.id, blog.createdAt)
+    deleteOrHideBlog(false, blog.visible, blog.id, blog.createdAt).then(res => {
+      setEyeHover(state);
+      const tempBlogs = blogs;
+      tempBlogs[blogs.findIndex(b => b.id === blog.id)].visible = state;
+      setBlogs(tempBlogs);
+      setIsOpenBin(false);
+    }).catch((e: Error) => alert(e.message))
   }
   const deleteBlog = () => {
-    console.log("deleted!")
-    const tempBlogs = blogs.filter(b => b.id !== blog.id);
-    setBlogs(tempBlogs);
-    setIsOpenBin(false);
-    // deleteBlog(true, false, blog.id, blog.createdAt)
+    deleteOrHideBlog(true, false, blog.id, blog.createdAt).then(res => {
+      const tempBlogs = blogs.filter(b => b.id !== blog.id);
+      setBlogs(tempBlogs);
+      setIsOpenBin(false);
+    }).catch((e: Error) => alert(e.message))
   }
 
   return (
@@ -68,19 +74,18 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
           <Bubble name={blog.saga} type='saga' />
           {owned ? (
             <div className='flex-row flex pl-3'>
-              <Edit className='cursor-pointer' stroke='#3072B4' width={25}
-                onClick={() => { editBlog({ currentUser, setPreBlog, preBlog, blog, creatingBlog, setCreatingBlog }); setIsEditing(!isEditing) }} />
+              <Edit className='cursor-pointer' stroke={editColour} width={25}
+                onClick={() => { editBlog({ currentUser, setPreBlog, preBlog, blog, creatingBlog, setCreatingBlog }); setIsEditing(!isEditing) }}
+                onMouseEnter={() => setEditColour('#0092B2')} onMouseLeave={() => setEditColour('#9C9C9C')}/>
               {blog.visible && !eyeHover || !blog.visible && eyeHover ?
-                (<Eye className='mx-3 cursor-pointer' stroke='#FF7A00' width={25} 
+                (<Eye className='mx-3 cursor-pointer' stroke='#9C9C9C' width={25} 
                   onMouseEnter={() => setEyeHover(true)} onMouseLeave={() => setEyeHover(false)}
                   onClick={() => toggleVisibility(true)} />) :
-                (<EyeOff className='mx-3 cursor-pointer' stroke='#FF7A00' width={25}
+                (<EyeOff className='mx-3 cursor-pointer' stroke='#0092B2' width={25}
                   onMouseEnter={() => setEyeHover(true)} onMouseLeave={() => setEyeHover(false)}
                   onClick={() => toggleVisibility(false)} />)}
-              <Bin className='cursor-pointer' stroke='#dc2626' width={25}
-                onClick={() => setIsOpenBin(true)} />
-              {/* <MoreDots onClick={() => { editBlog({ setPreBlog, blog, setCreatingBlog, setOriginalBlog }); setIsEditing(true) }}
-                className='ml-3 cursor-pointer' width={20} /> */}
+              <Bin className='cursor-pointer' stroke={binColour} width={25}
+                onClick={() => setIsOpenBin(true)} onMouseEnter={() => setBinColour('#DD2E44')} onMouseLeave={() => setBinColour('#9C4F58')}/>
             </div>
           ) : (null)}
         </div>
@@ -103,7 +108,6 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
             <div className='flex-row flex justify-between mt-3'>
               <button onClick={() => { setIsEditing(false)}} className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>cancel</button>
               <div>
-                {/* <button hidden={isEditing} onClick={() => saveDraft()} disabled={preBlog.body === currentUser.draft} className={`${preBlog.body !== currentUser.draft ? 'bg-sky-300' : 'bg-sky-200'} px-8 mr-3 py-2 rounded-full text-neutral-50 font-bold`}>save</button> */}
                 <button onClick={() => setIsOpen(true)} disabled={preBlog.body === ''} className={`${preBlog.body === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>confirm</button>
               </div>
             </div></div>) : (<ReactMarkdown className={`${blog.tags.length > 0 ? 'mb-5' : ''} markdown`} remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>)}
