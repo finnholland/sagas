@@ -92,8 +92,10 @@ export default function Home() {
     } else {
       Axios.get(`${API}/getBlogs`, { params: { userId: userId } }).then(res => {
         last_evaluated_key = res.data.last_evaluated_key
-        setBlogs(res.data.items)
-        blogsLength = Math.ceil(res.data.items.length / PAGE_SIZE);
+        let tempBlogs: BlogI[] = res.data.items
+        tempBlogs = tempBlogs.filter(b => b.createdAt === "2023-10-18T22:06:07+00:00")
+        setBlogs(tempBlogs)
+        blogsLength = Math.ceil(tempBlogs.length / PAGE_SIZE);
       });
     }
   }
@@ -191,8 +193,7 @@ export default function Home() {
     return <div />
   } else {
     return (
-      <div className='px-10 w-2/5 flex-grow-0 h-full flex-row justify-between items-center'>
-        <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed left-0 sides top-0 h-fit'/>
+      <div className='px-10 w-3/5 flex flex-grow-0 h-full flex-row justify-between items-center'>
         <div className='w-full h-full flex flex-col py-10 no-scrollbar'>
           {creatingBlog ? (
             <MdEditor preBlog={preBlog} setPreBlog={setPreBlog} isEditing={isEditing} setIsEditing={setIsEditing}
