@@ -1,9 +1,11 @@
 import moment from "moment";
-import { DATE_TYPE, ENV, REGION, S3_BUCKET, S3_URL } from "./constants";
+import { DATE_TYPE, ENV, REGION, S3_BUCKET, S3_URL } from "../constants";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { Blog, PreBlog, Saga } from "./types";
+import { BlogI, PreBlog, Saga } from "../types";
 import { Dispatch, SetStateAction } from "react";
-
+import { editBlogI } from "./interface";
+import { v4 as uuidv4 } from 'uuid';
+import { saveDraft } from "./api";
 
 export const getDateAge = (createdAt: string, type: string) => {
   const now = moment(new Date()).utcOffset('+0000'); //todays date
@@ -17,17 +19,17 @@ export const getDateAge = (createdAt: string, type: string) => {
 
 
   let ageString = ''
-  if (YEAR > 1) {
+  if (YEAR >= 1) {
     ageString = YEAR.toString() + ( YEAR >= 2 ? ' years' : ' year') + ' ago'
-  } else if (MONTH > 1) {
+  } else if (MONTH >= 1) {
     ageString = MONTH.toString() + (MONTH >= 2 ? ' months' : ' month') + ' ago';
-  } else if (WEEK > 1) {
+  } else if (WEEK >= 1) {
     ageString = WEEK.toString() + (WEEK >= 2 ? ' weeks' : ' week') + ' ago'; // minutes -> hours
-  } else if (DAY > 1) {
+  } else if (DAY >= 1) {
     ageString = DAY.toString() + (DAY >= 2 ? ' days' : ' day') + ' ago'; // minutes -> hours -> days
-  } else if (HOUR > 1) {
+  } else if (HOUR >= 1) {
     ageString = HOUR.toString() + (HOUR >= 2 ? ' hours' : ' hour') + ' ago';
-  } else if (MINUTE > 1) {
+  } else if (MINUTE >= 1) {
     ageString = MINUTE.toString() + (MINUTE >= 2 ? ' minutes' : ' minute') + ' ago'
   } else {
     ageString = 'just now'
@@ -35,6 +37,8 @@ export const getDateAge = (createdAt: string, type: string) => {
 
   if (type === DATE_TYPE.SAGA) {
     return ageString;
+  } else if (type === DATE_TYPE.EDIT) {
+    return 'edited - ' + ageString;
   } else {
     return moment(createdAt).format("YYYY/MM/DD") + ' - ' + ageString;
   }
@@ -50,7 +54,7 @@ export const uploadFile = async (body: File) => {
 
   const params = {
     Bucket: S3_BUCKET,
-    Key: body.name,
+    Key: ENV+'/'+body.name,
     Body: body,
     ContentType: "image/jpeg",
   };
@@ -136,8 +140,8 @@ export const addOrRemoveTag = ({ tag, preBlog, setPreBlog }: AddOrRemoveTagProps
   }
 }
 
-export const sortAndReduce = (array: Blog[]): Blog[] => {
-  let blogs: Blog[] = array.reduce((unique: Blog[], o) => {
+export const sortAndReduce = (array: BlogI[]): BlogI[] => {
+  let blogs: BlogI[] = array.reduce((unique: BlogI[], o) => {
     if (!unique.some(u => u.id === o.id)) {
       unique.push(o);
     }
@@ -147,3 +151,37 @@ export const sortAndReduce = (array: Blog[]): Blog[] => {
 
   return blogs
 }
+
+
+export const editBlog = (props: editBlogI) => {
+  if (props.creatingBlog) {
+    saveDraft(props.currentUser, props.preBlog.body).then(res => {
+      props.setPreBlog({ title: '', body: '', userId: props.currentUser.id, author: props.currentUser.name, tags: [], saga: '' });
+      props.setCreatingBlog(false);
+    })
+  }
+  const blog: PreBlog = {
+    title: props.blog.title,
+    body: props.blog.body,
+    userId: props.blog.userId,
+    author: props.blog.author,
+    tags: props.blog.tags,
+    saga: props.blog.saga
+  }
+  props.setPreBlog(blog);
+}
+
+export const handleImageUpload = (file: File) => {
+  let uuid = uuidv4();
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = data => {
+      if (data.target && data.target.result) {
+        if (typeof data.target.result === 'string') {
+          uploadFile(dataURLtoFile(data.target.result, 'images/' + uuid)).then(res => resolve(res))
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+};
