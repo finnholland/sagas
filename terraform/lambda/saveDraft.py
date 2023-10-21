@@ -7,7 +7,6 @@ client = boto3.resource("dynamodb")
 table = client.Table(tableName)
 
 def lambda_handler(event, context):
-    
     body = json.loads(event["body"])
 
     response = table.put_item(
