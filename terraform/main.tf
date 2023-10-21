@@ -252,3 +252,34 @@ resource "aws_route53_record" "api_record" {
     evaluate_target_health = true
   }
 }
+
+resource "aws_cognito_user_pool" "cog_up" {
+  name = "${var.name}-cog"
+  auto_verified_attributes = [ "email" ]
+  username_attributes = [ "email" ]
+  mfa_configuration = "OPTIONAL"
+  deletion_protection = "ACTIVE"
+  software_token_mfa_configuration {
+    enabled = true
+  }
+  user_attribute_update_settings {
+    attributes_require_verification_before_update = [
+        "email",
+      ]
+  }
+  username_configuration {
+    case_sensitive = false
+  }
+}
+
+resource "aws_cognito_user" "user" {
+  user_pool_id = aws_cognito_user_pool.cog_up.id
+  username     = var.cog_user.id
+  attributes = {
+    "email"                 = "${var.cog_user.email}"
+    "email_verified"        = "true"
+    "phone_number"          = "${var.cog_user.phone}"
+    "phone_number_verified" = "true"
+    "sub"                   = "${var.cog_user.id}"
+  }
+}

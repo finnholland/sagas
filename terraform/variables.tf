@@ -58,3 +58,11 @@ variable "attributes" {
   },
 ]
 }
+
+variable "cog_user" {
+  default = {
+    id = "0a6d1f96-70ca-407b-a99c-569bb425faca"
+    email = ""
+    phone = ""
+  }
+}
