@@ -43,7 +43,7 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
   const [isOpenBin, setIsOpenBin] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [sendHover, setSendHover] = useState(false)
   const [index, setIndex] = useState(Math.floor(Math.random() * ((profileImages.length -1) - 0 + 1)) + 0)
   
   const [height, setHeight] = useState(0)
@@ -156,14 +156,15 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
       <div className="flex flex-col w-2/6 mr-20 ml-5 p-8 pt-0 rounded-2xl" style={{maxHeight: height}}>
         <span className="mb-4 font-semibold text-xl">Comments</span>
         <div className="flex flex-row mb-5 bottom-1 border-sky-300 px-5 items-center">
-          <div onClick={() => incrementIndex()} className="mr-2 relative h-fit">
+          <div onClick={() => incrementIndex()} className="mr-2 relative h-fit cursor-pointer">
             <Refresh className="absolute -right-1 -bottom-1" fill="#3654A6" height={20}/>
             <Image className='rounded-full m-0 h-fit mr-2' src={DEFAULT_PROFILES_URL + profileImages[index]} alt='profile' width={40} height={40} />
           </div>
           
           <textarea ref={textAreaRef} value={comment} onChange={handleChange} placeholder="leave a comment"
             className="w-full resize-none flex font-normal text-sm rounded-xl bg-neutral-100 px-3 py-2 h-0" />
-          <Send className="ml-5" onClick={() => leaveComment()} height={30} fill="#ffffff00" stroke="#333"/>
+          <Send className="ml-5 cursor-pointer" onClick={() => leaveComment()}
+          onMouseEnter={() => setSendHover(true)} onMouseLeave={() => setSendHover(false)} strokeWidth={1} height={40} fill={sendHover ? "#75D0ED" : "#ffffff00"} stroke="#333" />
         </div>
         <div className="flex flex-col font-normal text-base overflow-scroll shadow-md h-auto p-5 pb-0 rounded-2xl">
           {comments.map((c) => {
