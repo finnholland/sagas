@@ -17,6 +17,8 @@ import ModalComponent from "./Modal"
 import Image from "next/image"
 import Heart from "@/app/assets/Heart"
 import InfiniteScroll from "react-infinite-scroll-component"
+import Refresh from "@/app/assets/Refresh"
+import Send from "@/app/Send"
 const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
 });
@@ -151,15 +153,19 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
 
   return (
     <div className="flex flex-row">
-      <div className="flex flex-col w-2/6 mr-20 ml-5 p-8 rounded-2xl shadow-md" style={{maxHeight: height}}>
+      <div className="flex flex-col w-2/6 mr-20 ml-5 p-8 pt-0 rounded-2xl" style={{maxHeight: height}}>
         <span className="mb-4 font-semibold text-xl">Comments</span>
-        <div className="flex flex-row mb-5 bottom-1 border-sky-300">
-          <Image onClick={() => incrementIndex()} className='rounded-full m-0 h-fit mr-2' src={DEFAULT_PROFILES_URL + profileImages[index]} alt='profile' width={40} height={40} />
+        <div className="flex flex-row mb-5 bottom-1 border-sky-300 px-5 items-center">
+          <div onClick={() => incrementIndex()} className="mr-2 relative h-fit">
+            <Refresh className="absolute -right-1 -bottom-1" fill="#3654A6" height={20}/>
+            <Image className='rounded-full m-0 h-fit mr-2' src={DEFAULT_PROFILES_URL + profileImages[index]} alt='profile' width={40} height={40} />
+          </div>
+          
           <textarea ref={textAreaRef} value={comment} onChange={handleChange} placeholder="leave a comment"
             className="w-full resize-none flex font-normal text-sm rounded-xl bg-neutral-100 px-3 py-2 h-0" />
-          <span className="font-normal" onClick={() => leaveComment()}>send it!</span>
+          <Send className="ml-5" onClick={() => leaveComment()} height={30} fill="#ffffff00" stroke="#333"/>
         </div>
-        <div className="flex flex-col font-normal text-base overflow-scroll h-auto p-5 pb-0 rounded-2xl">
+        <div className="flex flex-col font-normal text-base overflow-scroll shadow-md h-auto p-5 pb-0 rounded-2xl">
           {comments.map((c) => {
             return <Comment key={c.id} comment={c} id={currentUser.id} />
           })}
