@@ -3,11 +3,11 @@ import Bin from "@/app/assets/Bin"
 import Edit from "@/app/assets/Edit"
 import Eye from "@/app/assets/Eye"
 import EyeOff from "@/app/assets/EyeOff"
-import { DATE_TYPE, DEFAULT_PROFILES_URL } from "@/app/constants"
+import { DATE_TYPE, DEFAULT_PROFILES_URL, profileImages } from "@/app/constants"
 import { deleteOrHideBlog } from "@/app/helpers/api"
-import { getDateAge, editBlog, handleImageUpload } from "@/app/helpers/helpers"
-import { BlogI, PreBlog, User } from "@/app/types"
-import { Dispatch, SetStateAction, useState } from "react"
+import { getDateAge, editBlog, handleImageUpload, colourConverter, useAutosizeTextArea } from "@/app/helpers/helpers"
+import { BlogI, CommentI, PreBlog, User } from "@/app/types"
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Bubble } from "."
@@ -16,6 +16,7 @@ import Modal from 'react-modal';
 import ModalComponent from "./Modal"
 import Image from "next/image"
 import Heart from "@/app/assets/Heart"
+import InfiniteScroll from "react-infinite-scroll-component"
 const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
 });
@@ -40,10 +41,73 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
   const [isOpenBin, setIsOpenBin] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [index, setIndex] = useState(Math.floor(Math.random() * ((profileImages.length -1) - 0 + 1)) + 0)
   
+  const [height, setHeight] = useState(0)
+
   const [editColour, setEditColour] = useState('#9C9C9C')
-  const [eyeColour, setEyeColour] = useState('#9C9C9C')
   const [binColour, setBinColour] = useState('#9C4F58')
+  const [comment, setComment] = useState('')
+
+  const [comments, setComments] = useState<CommentI[]>([
+    {
+    id: '1', name: 'john johnson',
+    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
+    image: 'koala.png', createdAt: '', likes: []
+  },
+    {
+    id: '2', name: 'john johnson',
+    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
+    image: 'koala.png', createdAt: '', likes: []
+  },
+    {
+    id: '3', name: 'john johnson',
+    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
+    image: 'koala.png', createdAt: '', likes: []
+  },
+    {
+    id: '4', name: 'john johnson',
+    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
+    image: 'koala.png', createdAt: '', likes: []
+  },
+    {
+    id: '5', name: 'john johnson',
+    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
+    image: 'koala.png', createdAt: '', likes: []
+  },
+    {
+    id: '6', name: 'john johnson',
+    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
+    image: 'koala.png', createdAt: '', likes: []
+  },
+    {
+    id: '7', name: 'john johnson',
+    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
+    image: 'koala.png', createdAt: '', likes: []
+  },
+    {
+    id: '8', name: 'john johnson',
+    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
+    image: 'koala.png', createdAt: '', likes: []
+  },
+  ])
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const blogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    //getComments
+    if (blogRef.current) {
+      setHeight(blogRef.current.clientHeight);
+    }
+  }, [])
+
+  
+  useAutosizeTextArea(textAreaRef.current, comment);
+  const handleChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = evt.target?.value;
+    setComment(val);
+  };
 
   const toggleVisibility = (state: boolean) => {
     deleteOrHideBlog(false, blog.visible, blog.id, blog.createdAt).then(res => {
@@ -62,27 +126,46 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
     }).catch((e: Error) => alert(e.message))
   }
 
+  const incrementIndex = () => {
+    if (index >= profileImages.length -1) {
+      setIndex(0)
+    } else {
+      setIndex(index + 1)
+    }
+    console.log(index, profileImages.length)
+  }
+
+  const leaveComment = () => {
+    const tempComments = comments
+    tempComments. push({
+      id: Math.random().toString(),
+      name: "binn hoola",
+      body: comment,
+      image: profileImages[index],
+      createdAt: "",
+      likes: []
+    })
+    setComments(tempComments)
+    setComment('')
+  }
+
   return (
     <div className="flex flex-row">
-      <div className="flex flex-col w-2/6 font-semibold text-xl pr-16">
-        <span className="mb-4">Comments</span>
-        <div className="flex flex-col font-normal text-base">
-          <div className="flex flex-row">
-            <Image className='rounded-full m-0 h-fit mr-2' src={DEFAULT_PROFILES_URL + "bear.png"} alt='profile' width={40} height={40} />
-            <div className="flex flex-col flex-shrink">
-              <div className="flex flex-row items-center mb-1 justify-between">
-                <span className="font-light text-sky-300 text-sm">john johnson</span>
-                <div className="flex flex-row items-center">
-                  <Heart stroke="#333" strokeWidth={1} fill="#7dd3fc" width={25} />
-                  <span className="font-light text-sm ml-1 text-sky-300">100</span>
-                </div>
-              </div>
-              <span className="font-light text-sm">this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no</span>
-            </div>
-          </div>
+      <div className="flex flex-col w-2/6 mr-20 ml-5 p-8 rounded-2xl shadow-md" style={{maxHeight: height}}>
+        <span className="mb-4 font-semibold text-xl">Comments</span>
+        <div className="flex flex-row mb-5 bottom-1 border-sky-300">
+          <Image onClick={() => incrementIndex()} className='rounded-full m-0 h-fit mr-2' src={DEFAULT_PROFILES_URL + profileImages[index]} alt='profile' width={40} height={40} />
+          <textarea ref={textAreaRef} value={comment} onChange={handleChange} placeholder="leave a comment"
+            className="w-full resize-none flex font-normal text-sm rounded-xl bg-neutral-100 px-3 py-2 h-0" />
+          <span className="font-normal" onClick={() => leaveComment()}>send it!</span>
+        </div>
+        <div className="flex flex-col font-normal text-base overflow-scroll h-auto p-5 pb-0 rounded-2xl">
+          {comments.map((c) => {
+            return <Comment key={c.id} comment={c} id={currentUser.id} />
+          })}
         </div>
       </div>
-      <div className='flex-col flex mb-20 w-4/6'>
+      <div ref={blogRef} className='flex-col flex mb-20 w-3/6'>
         <div className='flex-row flex justify-between items-center'>
         <div className='flex-col flex justify-between'>
           <span className='text-xl font-semibold'>{blog.title}</span>
@@ -157,4 +240,45 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
       </div>
     </div>
   )
+}
+
+
+interface CommentProps {
+  comment: CommentI,
+  id: string
+}
+const Comment = ({ comment, id }: CommentProps) => {
+  const [likes, setLikes] = useState(comment.likes)
+  const [colours, setColours] = useState({fill: '#efa', stroke: '#333', tw: 'bg-blue-500'})
+  let liked = likes.includes(id)
+  
+  useEffect(() => {
+    setColours(colourConverter(comment.image))
+  }, [comment.image])
+
+  const toggleLike = () => {
+    let tempLikes = likes
+    if (liked) {
+      tempLikes = tempLikes.filter(l => l !== id)
+    } else {
+      tempLikes.push(id)
+    }
+    setLikes([...tempLikes])
+  }
+  return (
+    <div className="flex flex-row mb-6">
+      <Image className='rounded-full m-0 h-fit mr-2' src={DEFAULT_PROFILES_URL + comment.image} alt='profile' width={40} height={40} />
+      <div className="flex flex-col flex-shrink w-full">
+        <div className="flex flex-row items-center mb-1 justify-between">
+          <span className={`font-light text-sm ${colours.tw}`}>{comment.name}</span>
+          <div onClick={() => toggleLike()} className="flex flex-row items-center">
+            
+            <span className={`font-normal text-sm mr-1 ${colours.tw}`}>{likes.length}</span>
+            <Heart className="cursor-pointer" stroke={colours.stroke} strokeWidth={1.25} fill={likes.includes(id) ? colours.fill : "#ffffff00"} width={25} />
+          </div>
+        </div>
+        <span className="font-light text-sm">{comment.body}</span>
+      </div>
+    </div>
+  );
 }
