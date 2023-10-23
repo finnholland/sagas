@@ -46,3 +46,11 @@ export interface Saga {
   saga: string,
   updated: string
 }
+export interface CommentI {
+  id: string
+  name: string
+  body: string
+  image: string
+  createdAt: string
+  likes: string[]
+}

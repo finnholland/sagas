@@ -2,7 +2,7 @@ import moment from "moment";
 import { DATE_TYPE, ENV, REGION, S3_BUCKET, S3_URL } from "../constants";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { BlogI, PreBlog, Saga } from "../types";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { editBlogI } from "./interface";
 import { v4 as uuidv4 } from 'uuid';
 import { saveDraft } from "./api";
@@ -184,4 +184,38 @@ export const handleImageUpload = (file: File) => {
     };
     reader.readAsDataURL(file);
   });
+};
+
+export const colourConverter = (image: string): {fill: string, stroke: string, tw: string} => {
+  const replaced = image.replace('.png', '')
+
+  const blue = ['cow', 'chicken', 'tiger']
+  const sky = ['cat', 'bear', 'polarbear']
+  const green = ['pig', 'dog', 'rabbit']
+  const pink = ['koala', 'frog', 'hamster']
+
+  if (blue.includes(replaced)) {
+    return { fill: '#6485DC', stroke: '#3654A6', tw: 'text-blue-500'}
+  } else if (sky.includes(replaced)) {
+    return { fill: '#7DD3FC', stroke: '#3681A6', tw: 'text-sky-300' }
+  } else if (green.includes(replaced)) {
+    return { fill: '#75EDA5', stroke: '#36A662', tw: 'text-green-300' }
+  } else if (pink.includes(replaced)) {
+    return { fill: '#F1A2E4', stroke: '#A63694', tw: 'text-pink-300' }
+  }
+  return { fill: '#fff', stroke: '#333', tw: 'text-neutral-50' }
+}
+
+export const useAutosizeTextArea = (textAreaRef: HTMLTextAreaElement | null, value: string) => {
+  useEffect(() => {
+    if (textAreaRef) {
+      // We need to reset the height momentarily to get the correct scrollHeight for the textarea
+      textAreaRef.style.height = "0px";
+      const scrollHeight = textAreaRef.scrollHeight;
+
+      // We then set the height directly, outside of the render loop
+      // Trying to set this with state or a ref will product an incorrect value.
+      textAreaRef.style.height = scrollHeight + "px";
+    }
+  }, [textAreaRef, value]);
 };
