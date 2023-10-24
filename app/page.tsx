@@ -19,7 +19,6 @@ import ArrowDown from './assets/ArrowDown';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 import { Blog, MdEditor, SagaFilter, TagFilter } from '@/components';
-import { saveDraft } from './helpers/api';
 
 Amplify.configure({
   Auth: {
@@ -94,7 +93,7 @@ export default function Home() {
         last_evaluated_key = res.data.last_evaluated_key
         let tempBlogs: BlogI[] = res.data.items
         tempBlogs = tempBlogs.filter(b => b.createdAt === "2023-10-18T22:06:07+00:00")
-        setBlogs(tempBlogs)
+        setBlogs(res.data.items)
         blogsLength = Math.ceil(tempBlogs.length / PAGE_SIZE);
       });
     }
