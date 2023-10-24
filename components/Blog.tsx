@@ -100,6 +100,7 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
   useEffect(() => {
     //getComments
     if (blogRef.current) {
+      console.log(blogRef.current.clientHeight)
       setHeight(blogRef.current.clientHeight);
     }
   }, [])
@@ -153,7 +154,7 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
 
   return (
     <div className="flex flex-row">
-      <div className="flex flex-col w-2/6 mr-20 ml-5 p-8 pt-0 rounded-2xl" style={{maxHeight: height}}>
+      <div className="flex flex-col w-2/6 mr-20 ml-5 px-8" style={{ maxHeight: height + 52 - 16 }}>
         <span className="mb-4 font-semibold text-xl">Comments</span>
         <div className="flex flex-row mb-5 bottom-1 border-sky-300 px-5 items-center">
           <div onClick={() => incrementIndex()} className="mr-2 relative h-fit cursor-pointer">
@@ -163,16 +164,16 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
           
           <textarea ref={textAreaRef} value={comment} onChange={handleChange} placeholder="leave a comment"
             className="w-full resize-none flex font-normal text-sm rounded-xl bg-neutral-100 px-3 py-2 h-0" />
-          <Send className="ml-5 cursor-pointer" onClick={() => leaveComment()}
+          <Send className="ml-5 cursor-pointer" onClick={() => { comment.trim() === '' ? null : leaveComment() }}
           onMouseEnter={() => setSendHover(true)} onMouseLeave={() => setSendHover(false)} strokeWidth={1} height={40} fill={sendHover ? "#75D0ED" : "#ffffff00"} stroke="#333" />
         </div>
-        <div className="flex flex-col font-normal text-base overflow-scroll shadow-md h-auto p-5 pb-0 rounded-2xl">
+        <div className="flex flex-col font-normal text-base overflow-scroll border-l-1 border-sky-50 scrollbar h-auto p-5 pb-0 ">
           {comments.map((c) => {
             return <Comment key={c.id} comment={c} id={currentUser.id} />
           })}
         </div>
       </div>
-      <div ref={blogRef} className='flex-col flex mb-20 w-3/6'>
+      <div className='flex-col flex mb-20 w-3/6'>
         <div className='flex-row flex justify-between items-center'>
         <div className='flex-col flex justify-between'>
           <span className='text-xl font-semibold'>{blog.title}</span>
@@ -221,7 +222,13 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
                 <div>
                   <button onClick={() => setIsOpen(true)} disabled={preBlog.body === ''} className={`${preBlog.body === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>confirm</button>
                 </div>
-              </div></div>) : (<ReactMarkdown className={`${blog.tags.length > 0 ? 'mb-5' : ''} markdown`} remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{blog.body}</ReactMarkdown>)}
+          </div></div>) : (
+              <div ref={blogRef}>
+                <ReactMarkdown className={`${blog.tags.length > 0 ? 'mb-5' : ''} markdown`} remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>
+                  {blog.body}
+                </ReactMarkdown>
+              </div>
+        )}
         
         <div className='flex-row flex flex-wrap'>
           {blog.tags.map((tag) => {
