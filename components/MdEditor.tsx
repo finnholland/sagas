@@ -38,7 +38,7 @@ export const MdEditor = (props: MdEditorI) => {
   }
 
   return (
-    <div className='mb-10'>
+    <div className='mb-10 w-2/5 px-10'>
       <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full mb-5'>
         <Editor
           value={props.preBlog.body}

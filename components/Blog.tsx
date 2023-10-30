@@ -113,7 +113,7 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
   };
 
   const toggleVisibility = (state: boolean) => {
-    deleteOrHideBlog(false, blog.visible, blog.id, blog.createdAt).then(res => {
+    deleteOrHideBlog(false, blog.visible, blog.id, blog.createdAt, currentUser.jwt).then(res => {
       setEyeHover(state);
       const tempBlogs = blogs;
       tempBlogs[blogs.findIndex(b => b.id === blog.id)].visible = state;
@@ -122,7 +122,7 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
     }).catch((e: Error) => alert(e.message))
   }
   const deleteBlog = () => {
-    deleteOrHideBlog(true, false, blog.id, blog.createdAt).then(res => {
+    deleteOrHideBlog(true, false, blog.id, blog.createdAt, currentUser.jwt).then(res => {
       const tempBlogs = blogs.filter(b => b.id !== blog.id);
       setBlogs(tempBlogs);
       setIsOpenBin(false);
@@ -153,8 +153,8 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
   }
 
   return (
-    <div className="flex flex-row">
-      <div className="flex flex-col w-2/6 mr-20 ml-5 px-8" style={{ maxHeight: height + 52 - 16 }}>
+    <div className="flex flex-row justify-between">
+      <div className="flex flex-col w-1/4 pl-20" style={{ maxHeight: height + 52 - 16 }}>
         <span className="mb-4 font-semibold text-xl">Comments</span>
         <div className="flex flex-row mb-5 bottom-1 border-sky-300 px-5 items-center">
           <div onClick={() => incrementIndex()} className="mr-2 relative h-fit cursor-pointer">
@@ -173,7 +173,7 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
           })}
         </div>
       </div>
-      <div className='flex-col flex mb-20 w-3/6'>
+      <div className='flex-col flex mb-20 w-2/5 px-10'>
         <div className='flex-row flex justify-between items-center'>
         <div className='flex-col flex justify-between'>
           <span className='text-xl font-semibold'>{blog.title}</span>
@@ -252,6 +252,7 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
         setBlogs={setBlogs} isEditing={isEditing} setIsEditing={setIsEditing} pageAuthor={pageAuthor} currentUser={currentUser} orginalBlog={blog}
         setOriginalBlog={setOriginalBlog} setCreatingBlog={setCreatingBlog} />
       </div>
+      <div className='w-1/4 flex flex-col h-10' />
     </div>
   )
 }

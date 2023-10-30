@@ -112,12 +112,24 @@ resource "aws_apigatewayv2_integration" "api_integ" {
   payload_format_version    = "2.0"
 }
 
+resource "aws_apigatewayv2_authorizer" "api_auth" {
+  api_id                            = aws_apigatewayv2_api.api_sagas.id
+  authorizer_type                   = "JWT"
+  identity_sources                  = ["$request.header.Authorization"]
+  name                              = "${var.name}-jwt"
+  jwt_configuration {
+    issuer   = "https://${aws_cognito_user_pool.cog_up.endpoint}"
+    audience = [ aws_cognito_user_pool_client.client.id ]
+  }
+}
+
 resource "aws_apigatewayv2_route" "api_routes" {
-  count = length(var.function_names)
-  
-  api_id    = aws_apigatewayv2_api.api_sagas.id
-  route_key = var.function_names[count.index].route
-  target    = "integrations/${aws_apigatewayv2_integration.api_integ[count.index].id}"
+  count              = length(var.function_names)
+  authorizer_id      = length(regexall("^POST.*", var.function_names[count.index].route)) > 0 ? aws_apigatewayv2_authorizer.api_auth.id : null
+  authorization_type = length(regexall("^POST.*", var.function_names[count.index].route)) > 0 ? "JWT" : null
+  api_id             = aws_apigatewayv2_api.api_sagas.id
+  route_key          = var.function_names[count.index].route
+  target             = "integrations/${aws_apigatewayv2_integration.api_integ[count.index].id}"
 }
 
 data "aws_s3_bucket" "s3_sagas" {
@@ -269,6 +281,17 @@ resource "aws_cognito_user_pool" "cog_up" {
   }
   username_configuration {
     case_sensitive = false
+  }
+}
+
+resource "aws_cognito_user_pool_client" "client" {
+  name = "${aws_cognito_user_pool.cog_up.name}-client"
+
+  user_pool_id = aws_cognito_user_pool.cog_up.id
+  token_validity_units {
+    access_token  = "minutes"
+    id_token      = "minutes"
+    refresh_token = "days"
   }
 }
 

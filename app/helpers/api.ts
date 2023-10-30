@@ -14,7 +14,7 @@ export const updateBlog = (props: updateBlogI) => {
       createdAt: props.originalBlog?.createdAt
     }
 
-    Axios.post(`${API}/updateBlog`, params).then(res => {
+    Axios.post(`${API}/updateBlog`, params, { headers: { Authorization: props.user.jwt } }).then(res => {
       props.setPreBlog({ title: '', body: '', userId: props.user.id || '', author: props.user.name || '', tags: [], saga: '' });
       props.setCreatingBlog(false);
       props.setOriginalBlog(undefined);
@@ -22,11 +22,11 @@ export const updateBlog = (props: updateBlogI) => {
   }
 }
 
-export const deleteOrHideBlog = async (deleteBlog: boolean, hideBlog: boolean, id: string, createdAt: string) => {
+export const deleteOrHideBlog = async (deleteBlog: boolean, hideBlog: boolean, id: string, createdAt: string, jwt: string | undefined) => {
   if (deleteBlog) {
-    Axios.post(`${API}/updateBlog`, { delete: true, id: id, createdAt: createdAt })
+    Axios.post(`${API}/updateBlog`, { delete: true, id: id, createdAt: createdAt }, { headers: { Authorization: jwt } })
   } else {
-    Axios.post(`${API}/updateBlog`, { hide: !hideBlog, id: id, createdAt: createdAt })
+    Axios.post(`${API}/updateBlog`, { hide: !hideBlog, id: id, createdAt: createdAt }, { headers: { Authorization: jwt } })
   }
 }
 

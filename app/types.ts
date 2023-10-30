@@ -40,6 +40,7 @@ export interface User {
   tags: string[],
   type: string
   draft?: string
+  jwt?: string
 }
 
 export interface Saga {
