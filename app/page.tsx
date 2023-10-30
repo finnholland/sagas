@@ -36,6 +36,8 @@ let tagsLength = 0;
 let sagasLength = 0;
 let blogsLength = 0;
 let storageArray: BlogI[] = []
+
+let jwt = '';
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: '', profileImage: '', draft: ''})
   const [pageAuthor, setPageAuthor] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: '', profileImage: ''})
@@ -65,6 +67,7 @@ export default function Home() {
       if (res != undefined) {
         getCurrentUser(res.username)
         getBlogs(res.username);
+        jwt = res.signInUserSession.getAccessToken().getJwtToken();
       }
     }).finally(() => {
       setLoaded(true)
@@ -163,7 +166,7 @@ export default function Home() {
   const getCurrentUser = (id: string) => {
     setAuthenticated(true);
     Axios.get(`${API}/getUser`, {params: {id: id, self: true}}).then(res => {
-      setCurrentUser(res.data)
+      setCurrentUser({ ...res.data, jwt: jwt })
       setPreBlog(prev => ({ ...prev, author: res.data.name, userId: res.data.id, body: res.data.draft || '' }))
     })
   }
@@ -192,8 +195,8 @@ export default function Home() {
     return <div />
   } else {
     return (
-      <div className='pr-20 pl-32 w-4/5 flex flex-grow-0 h-full flex-row justify-between items-center'>
-        <div className='w-full h-full flex flex-col py-10 no-scrollbar'>
+      <div className='flex flex-grow-0 h-full flex-row justify-between items-center'>
+        <div className='w-full h-full flex flex-col py-10 no-scrollbar items-center'>
           {creatingBlog ? (
             <MdEditor preBlog={preBlog} setPreBlog={setPreBlog} isEditing={isEditing} setIsEditing={setIsEditing}
               currentUser={currentUser} setCreatingBlog={setCreatingBlog} setCurrentUser={setCurrentUser}

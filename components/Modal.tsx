@@ -31,6 +31,7 @@ const ModalComponent = (props: ModalI) => {
       updateBlog({ setIsOpen: props.setIsOpen, preBlog: props.preBlog, setPreBlog: props.setPreBlog, originalBlog: props.orginalBlog, setOriginalBlog: props.setOriginalBlog, setCreatingBlog: props.setCreatingBlog, user: props.currentUser  });
       props.setIsEditing(false)
     } else {
+
       props.setIsOpen(false);
 
       let newSagas = props.currentUser.sagas || [];
@@ -49,7 +50,10 @@ const ModalComponent = (props: ModalI) => {
         combinedTags = []
       }
 
-      Axios.post(`${API}/createBlog`, { ...props.preBlog, userTags: combinedTags, userSagas: newSagas, createdAt: props.currentUser.createdAt }).then(res => {
+      Axios.post(`${API}/createBlog`,
+        { ...props.preBlog, userTags: combinedTags, userSagas: newSagas, createdAt: props.currentUser.createdAt },
+        { headers: { Authorization: props.currentUser.jwt } }
+      ).then(res => {
         props.setPreBlog({ title: '', body: '', userId: props.currentUser.id, author: props.currentUser.name, tags: [], saga: '' });
         props.setCreatingBlog(false);
       })
