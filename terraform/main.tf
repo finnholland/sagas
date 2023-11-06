@@ -125,8 +125,8 @@ resource "aws_apigatewayv2_authorizer" "api_auth" {
 
 resource "aws_apigatewayv2_route" "api_routes" {
   count              = length(var.function_names)
-  authorizer_id      = length(regexall("^POST.*", var.function_names[count.index].route)) > 0 ? aws_apigatewayv2_authorizer.api_auth.id : null
-  authorization_type = length(regexall("^POST.*", var.function_names[count.index].route)) > 0 ? "JWT" : null
+  authorizer_id      = var.function_names[count.index].jwt ? aws_apigatewayv2_authorizer.api_auth.id : null
+  authorization_type = var.function_names[count.index].jwt ? "JWT" : null
   api_id             = aws_apigatewayv2_api.api_sagas.id
   route_key          = var.function_names[count.index].route
   target             = "integrations/${aws_apigatewayv2_integration.api_integ[count.index].id}"

@@ -4,8 +4,8 @@ import Edit from "@/app/assets/Edit"
 import Eye from "@/app/assets/Eye"
 import EyeOff from "@/app/assets/EyeOff"
 import { DATE_TYPE, DEFAULT_PROFILES_URL, profileImages } from "@/app/constants"
-import { deleteOrHideBlog } from "@/app/helpers/api"
-import { getDateAge, editBlog, handleImageUpload, colourConverter, useAutosizeTextArea } from "@/app/helpers/helpers"
+import { deleteOrHideBlog, getComments, likeBlog } from "@/app/helpers/api"
+import { getDateAge, editBlog, handleImageUpload, colourConverter, useAutosizeTextArea, getShares } from "@/app/helpers/helpers"
 import { BlogI, CommentI, PreBlog, User } from "@/app/types"
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
@@ -14,18 +14,17 @@ import { Bubble } from "."
 import dynamic from "next/dynamic"
 import Modal from 'react-modal';
 import ModalComponent from "./Modal"
-import Image from "next/image"
+import CommentIcon from "@/app/assets/CommentIcon"
+import Share from "@/app/assets/Share"
 import Heart from "@/app/assets/Heart"
-import InfiniteScroll from "react-infinite-scroll-component"
-import Refresh from "@/app/assets/Refresh"
-import Send from "@/app/Send"
+import CommentModal from "./CommentModal"
 const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
 });
 
 
 interface BlogProps {
-  blog: BlogI
+  blogT: BlogI
   owned: boolean
   preBlog: PreBlog
   setPreBlog: Dispatch<SetStateAction<PreBlog>>
@@ -38,79 +37,26 @@ interface BlogProps {
   setCreatingBlog: Dispatch<SetStateAction<boolean>>
 }
 
-export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, blogs, setBlogs, pageAuthor, currentUser, setOriginalBlog, setCreatingBlog, creatingBlog }) => {
+export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, blogs, setBlogs, pageAuthor, currentUser, setOriginalBlog, setCreatingBlog, creatingBlog }) => {
   const [eyeHover, setEyeHover] = useState(false)
   const [isOpenBin, setIsOpenBin] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+  const [isOpenComments, setIsOpenComments] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [sendHover, setSendHover] = useState(false)
-  const [index, setIndex] = useState(Math.floor(Math.random() * ((profileImages.length -1) - 0 + 1)) + 0)
   
-  const [height, setHeight] = useState(0)
+  const [blog, setBlog] = useState<BlogI>(blogT)
 
   const [editColour, setEditColour] = useState('#9C9C9C')
   const [binColour, setBinColour] = useState('#9C4F58')
-  const [comment, setComment] = useState('')
 
-  const [comments, setComments] = useState<CommentI[]>([
-    {
-    id: '1', name: 'john johnson',
-    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
-    image: 'koala.png', createdAt: '', likes: []
-  },
-    {
-    id: '2', name: 'john johnson',
-    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
-    image: 'koala.png', createdAt: '', likes: []
-  },
-    {
-    id: '3', name: 'john johnson',
-    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
-    image: 'koala.png', createdAt: '', likes: []
-  },
-    {
-    id: '4', name: 'john johnson',
-    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
-    image: 'koala.png', createdAt: '', likes: []
-  },
-    {
-    id: '5', name: 'john johnson',
-    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
-    image: 'koala.png', createdAt: '', likes: []
-  },
-    {
-    id: '6', name: 'john johnson',
-    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
-    image: 'koala.png', createdAt: '', likes: []
-  },
-    {
-    id: '7', name: 'john johnson',
-    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
-    image: 'koala.png', createdAt: '', likes: []
-  },
-    {
-    id: '8', name: 'john johnson',
-    body: 'this is a comment!thta is really log and aoinawodi noawndoi naodna osndoinawo ndoan doiasndo naodn aosndo nasod no',
-    image: 'koala.png', createdAt: '', likes: []
-  },
-  ])
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [comments, setComments] = useState<CommentI[]>([])
+
+  
   const blogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    //getComments
-    if (blogRef.current) {
-      console.log(blogRef.current.clientHeight)
-      setHeight(blogRef.current.clientHeight);
-    }
+    getComments(blog.id, setComments)
   }, [])
-
-  
-  useAutosizeTextArea(textAreaRef.current, comment);
-  const handleChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = evt.target?.value;
-    setComment(val);
-  };
 
   const toggleVisibility = (state: boolean) => {
     deleteOrHideBlog(false, blog.visible, blog.id, blog.createdAt, currentUser.jwt).then(res => {
@@ -129,59 +75,32 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
     }).catch((e: Error) => alert(e.message))
   }
 
-  const incrementIndex = () => {
-    if (index >= profileImages.length -1) {
-      setIndex(0)
-    } else {
-      setIndex(index + 1)
-    }
-    console.log(index, profileImages.length)
-  }
-
-  const leaveComment = () => {
-    const tempComments = comments
-    tempComments. push({
-      id: Math.random().toString(),
-      name: "binn hoola",
-      body: comment,
-      image: profileImages[index],
-      createdAt: "",
-      likes: []
-    })
-    setComments(tempComments)
-    setComment('')
-  }
 
   return (
-    <div className="flex flex-row justify-between">
-      <div className="flex flex-col w-1/4 pl-20" style={{ maxHeight: height + 52 - 16 }}>
-        <span className="mb-4 font-semibold text-xl">Comments</span>
-        <div className="flex flex-row mb-5 bottom-1 border-sky-300 px-5 items-center">
-          <div onClick={() => incrementIndex()} className="mr-2 relative h-fit cursor-pointer">
-            <Refresh className="absolute -right-1 -bottom-1" fill="#3654A6" height={20}/>
-            <Image className='rounded-full m-0 h-fit mr-2' src={DEFAULT_PROFILES_URL + profileImages[index]} alt='profile' width={40} height={40} />
-          </div>
-          
-          <textarea ref={textAreaRef} value={comment} onChange={handleChange} placeholder="leave a comment"
-            className="w-full resize-none flex font-normal text-sm rounded-xl bg-neutral-100 px-3 py-2 h-0" />
-          <Send className="ml-5 cursor-pointer" onClick={() => { comment.trim() === '' ? null : leaveComment() }}
-          onMouseEnter={() => setSendHover(true)} onMouseLeave={() => setSendHover(false)} strokeWidth={1} height={40} fill={sendHover ? "#75D0ED" : "#ffffff00"} stroke="#333" />
+    <div className="flex-col flex mb-20 w-2/5">
+      <div className="flex flex-col absolute -ml-16 items-center justify-between">
+        <div className="flex flex-col text-center text-[#333] cursor-pointer" onClick={() => likeBlog(blog.id, currentUser.id, setBlog, blog)}>
+          <Heart width={30} strokeWidth={1.5} stroke="#333" fill={blog.likes?.includes(currentUser.id) ? '#6ED0D7' : "#ffffff00"}/>
+          <span>{blog.likes?.length ?? 0}</span>
         </div>
-        <div className="flex flex-col font-normal text-base overflow-scroll border-l-1 border-sky-50 scrollbar h-auto p-5 pb-0 ">
-          {comments.map((c) => {
-            return <Comment key={c.id} comment={c} id={currentUser.id} />
-          })}
+        <div className="my-4 flex flex-col text-center text-[#333] cursor-pointer" onClick={() => setIsOpenComments(true)}>
+          <CommentIcon width={30} stroke="#333"/>
+          <span>{comments.length}</span>
         </div>
+        <div className="flex flex-col text-center text-[#333] cursor-pointer" onClick={() => navigator.clipboard.writeText('sagas.finnholland.dev')}>
+          <Share width={30} stroke="#333"/>
+          <span>{getShares(blog.createdAt)}</span>
+        </div>
+        
       </div>
-      <div className='flex-col flex mb-20 w-2/5 px-10'>
-        <div className='flex-row flex justify-between items-center'>
+      <div className='flex-row flex justify-between items-center cursor-pointer' onClick={() => setIsOpenComments(true)}>
         <div className='flex-col flex justify-between'>
           <span className='text-xl font-semibold'>{blog.title}</span>
           <div className='flex-row'>
-              <span title={blog.editedAt ? getDateAge(blog.editedAt, DATE_TYPE.EDIT) : ''}
-                className='text-sm mt-1'>{getDateAge(blog.createdAt, DATE_TYPE.BLOG)} {blog.editedAt ? '*' : ''}</span>
+            <span title={blog.editedAt ? getDateAge(blog.editedAt, DATE_TYPE.EDIT) : ''}
+              className='text-sm mt-1'>{getDateAge(blog.createdAt, DATE_TYPE.BLOG)} {blog.editedAt ? '*' : ''}</span>
           </div>
-          </div>
+        </div>
           <div className='flex-row flex items-center'>
             <Bubble name={blog.saga} type='saga' />
             {owned ? (
@@ -251,49 +170,8 @@ export const Blog: React.FC<BlogProps> = ({ blog, owned, setPreBlog, preBlog, bl
         <ModalComponent setIsOpen={setIsOpen} isOpen={isOpen} preBlog={preBlog} setPreBlog={setPreBlog} blogs={blogs}
         setBlogs={setBlogs} isEditing={isEditing} setIsEditing={setIsEditing} pageAuthor={pageAuthor} currentUser={currentUser} orginalBlog={blog}
         setOriginalBlog={setOriginalBlog} setCreatingBlog={setCreatingBlog} />
-      </div>
-      <div className='w-1/4 flex flex-col h-10' />
+      <CommentModal isOpen={isOpenComments} setIsOpen={setIsOpenComments} userId={currentUser.id} blog={blog} setBlog={setBlog}
+        title={blog.title} saga={blog.saga} comments={comments} setComments={setComments} createdAt={blog.createdAt}  editedAt={blog.editedAt}/>
     </div>
   )
-}
-
-
-interface CommentProps {
-  comment: CommentI,
-  id: string
-}
-const Comment = ({ comment, id }: CommentProps) => {
-  const [likes, setLikes] = useState(comment.likes)
-  const [colours, setColours] = useState({fill: '#efa', stroke: '#333', tw: 'bg-blue-500'})
-  let liked = likes.includes(id)
-  
-  useEffect(() => {
-    setColours(colourConverter(comment.image))
-  }, [comment.image])
-
-  const toggleLike = () => {
-    let tempLikes = likes
-    if (liked) {
-      tempLikes = tempLikes.filter(l => l !== id)
-    } else {
-      tempLikes.push(id)
-    }
-    setLikes([...tempLikes])
-  }
-  return (
-    <div className="flex flex-row mb-6">
-      <Image className='rounded-full m-0 h-fit mr-2' src={DEFAULT_PROFILES_URL + comment.image} alt='profile' width={40} height={40} />
-      <div className="flex flex-col flex-shrink w-full">
-        <div className="flex flex-row items-center mb-1 justify-between">
-          <span className={`font-light text-sm ${colours.tw}`}>{comment.name}</span>
-          <div onClick={() => toggleLike()} className="flex flex-row items-center">
-            
-            <span className={`font-normal text-sm mr-1 ${colours.tw}`}>{likes.length}</span>
-            <Heart className="cursor-pointer" stroke={colours.stroke} strokeWidth={1.25} fill={likes.includes(id) ? colours.fill : "#ffffff00"} width={25} />
-          </div>
-        </div>
-        <span className="font-light text-sm">{comment.body}</span>
-      </div>
-    </div>
-  );
 }

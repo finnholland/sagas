@@ -1,8 +1,9 @@
 import Axios from 'axios';
 import { API } from '../constants';
 import { updateBlogI } from './interface';
-import { PreBlog, User } from '../types';
+import { BlogI, CommentI, PreBlog, User } from '../types';
 import { Dispatch, SetStateAction } from 'react';
+import { censorText } from './helpers';
 
 export const updateBlog = (props: updateBlogI) => {
   if (props.originalBlog !== undefined && props.originalBlog) {
@@ -32,4 +33,42 @@ export const deleteOrHideBlog = async (deleteBlog: boolean, hideBlog: boolean, i
 
 export const saveDraft = async (user: User, body: string) => {
   Axios.post(`${API}/saveDraft`, { ...user, draft: body })
+}
+
+export const getComments = async (blogId: string, setComments: Dispatch<SetStateAction<CommentI[]>>) => { 
+  // Axios.get(`${API}/getComments`, { params: { blogId: blogId } })
+  const tempComments: CommentI[] = []
+  for (let i = 0; i < Math.floor(Math.random() * ((10))); i++) {
+    tempComments.push({
+      id: i.toString(),
+      author: 'john_johnson',
+      body: 'blogus commentus',
+      image: 'koala.png', createdAt: '2023-11-06T05:43:44+00:00', likes: []
+    })
+  }
+  return setComments(tempComments)
+}
+
+export const createComment = async (userId: string, blogId: string, author: string, body: string, image: string) => {
+  Axios.post(`${API}/createComment`, { userId: userId, blogId: blogId, author: author, body: censorText(body), image: image })
+}
+
+export const likeBlog = async (blogId: string, userId: string, setBlog: Dispatch<SetStateAction<BlogI>>, blog: BlogI) => {
+  // Axios.post(`${API}/likeBlog`, { blogId, userId })
+  if (!blog.likes) {
+    setBlog(prev => ({ ...prev, likes: [userId] }))
+  } else if (blog.likes.includes(userId)) {
+    // Axios.post(`${API}/likeBlog`, { blogId, userId, false })
+    setBlog(prev => ({ ...prev, likes: blog.likes.filter(u => u != userId) }))
+  } else {
+    // Axios.post(`${API}/likeBlog`, { blogId, userId, true })
+    let tempLikes = blog.likes
+    tempLikes.push(userId)
+    setBlog(prev => ({ ...prev, likes: tempLikes }))
+  }
+}
+
+export const likeComment = async (userId: string, comment: CommentI, liked: boolean) => {
+  comment.id = 'comment-128264c0-1cf0-4be9-8112-8797bab15f4a-2023-11-06T05:43:44+00:00'
+  Axios.post(`${API}/likeComment`, { comment: comment, userId: userId, like: !liked})
 }

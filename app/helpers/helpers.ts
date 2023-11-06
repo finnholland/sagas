@@ -6,6 +6,7 @@ import { Dispatch, SetStateAction, useEffect } from "react";
 import { editBlogI } from "./interface";
 import { v4 as uuidv4 } from 'uuid';
 import { saveDraft } from "./api";
+import * as o from 'obscenity';
 
 export const getDateAge = (createdAt: string, type: string) => {
   const now = moment(new Date()).utcOffset('+0000'); //todays date
@@ -218,4 +219,33 @@ export const useAutosizeTextArea = (textAreaRef: HTMLTextAreaElement | null, val
       textAreaRef.style.height = scrollHeight + "px";
     }
   }, [textAreaRef, value]);
+};
+
+// generates a random number of shares based on time of post to simulate engagement until i figure out a good way other than clicks
+export const getShares = (createdAt: string) => {
+  const now = moment(new Date()).utcOffset('+0000'); //todays date
+  const end = moment(createdAt);
+  const HOUR = Math.round(moment.duration(now.diff(end)).asHours());
+
+  if (HOUR < 8) {
+    return 0;
+  }
+  const random = Math.sin(42);
+  const shares = Math.floor(HOUR * random/10000 * 100);
+  return Math.abs(shares)
+}
+
+///// CENSORING \\\\\\
+const matcher = new o.RegExpMatcher({
+  ...o.englishDataset.build(),
+  ...o.englishRecommendedTransformers,
+});
+const censor = new o.TextCensor().setStrategy(
+  o.keepStartCensorStrategy(o.asteriskCensorStrategy()
+  ));
+
+export const censorText = (message: string) => {
+  const matches = matcher.getAllMatches(message);
+  const censored = censor.applyTo(message, matches);
+  return censored;
 };

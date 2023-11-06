@@ -19,6 +19,9 @@ import ArrowDown from './assets/ArrowDown';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 import { Blog, MdEditor, SagaFilter, TagFilter } from '@/components';
+import CommentIcon from './assets/CommentIcon';
+import Heart from './assets/Heart';
+import Share from './assets/Share';
 
 Amplify.configure({
   Auth: {
@@ -187,7 +190,7 @@ export default function Home() {
   }
 
   const blogItem = blogs?.map((item) => (
-    <Blog key={item.id} blog={item} owned={item.userId === currentUser.id} setPreBlog={setPreBlog} preBlog={preBlog} setBlogs={setBlogs}
+    <Blog key={item.id} blogT={item} owned={item.userId === currentUser.id} setPreBlog={setPreBlog} preBlog={preBlog} setBlogs={setBlogs}
       blogs={blogs} pageAuthor={pageAuthor} currentUser={currentUser} setOriginalBlog={setOriginalBlog} creatingBlog={creatingBlog} setCreatingBlog={setCreatingBlog}/>
   ))
 
@@ -209,7 +212,7 @@ export default function Home() {
             endMessage={<p className='text-neutral-400 text-center select-none'>no more blogs :(</p>}
             loader={!loaded ?'loading...' : ''}
             
-            className='overflow-visible mb-10'>
+            className='overflow-visible mb-10 justify-center items-center flex flex-col'>
             {blogItem}
             <div onClick={() => getBlogs(currentUser.id)} className={`cursor-pointer flex-row flex justify-center items-center ${last_evaluated_key === null || filtering ? 'hidden' : ''}`}>
               <span className='mr-2 text-sky-300'>load more</span>
