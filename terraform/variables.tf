@@ -14,30 +14,47 @@ variable "function_names" {
     {
       name  = "getUser"
       route = "GET /getUser"
+      jwt   = false
     },
     {
       name  = "createBlog"
       route = "POST /createBlog"
+      jwt   = true
     },
     {
       name  = "getBlogsFiltered"
       route = "GET /getBlogsFiltered"
+      jwt   = false
     },
     {
       name  = "getBlogs"
       route = "GET /getBlogs"
+      jwt   = false
     },
     {
       name  = "cors"
       route = "OPTIONS /{proxy+}"
+      jwt   = false
     },
     {
       name  = "updateBlog"
       route = "POST /updateBlog"
+      jwt   = true
     },
     {
       name  = "saveDraft"
       route = "POST /saveDraft"
+      jwt   = true
+    },
+    {
+      name  = "createComment"
+      route = "POST /createComment"
+      jwt   = false
+    },
+    {
+      name  = "likeComment"
+      route = "POST /likeComment"
+      jwt   = false
     }
   ]
 }
