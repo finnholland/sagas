@@ -16,7 +16,8 @@ export interface BlogI {
   author: string,
   visible: boolean,
   tags: string[],
-  saga: string
+  saga: string,
+  likes: string[]
 }
 export interface FilterBlog {
   id?: string
@@ -40,9 +41,18 @@ export interface User {
   tags: string[],
   type: string
   draft?: string
+  jwt?: string
 }
 
 export interface Saga {
   saga: string,
   updated: string
+}
+export interface CommentI {
+  id: string
+  author: string
+  body: string
+  image: string
+  createdAt: string
+  likes: string[]
 }

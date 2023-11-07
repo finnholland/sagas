@@ -2,10 +2,11 @@ import moment from "moment";
 import { DATE_TYPE, ENV, REGION, S3_BUCKET, S3_URL } from "../constants";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { BlogI, PreBlog, Saga } from "../types";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { editBlogI } from "./interface";
 import { v4 as uuidv4 } from 'uuid';
-import { saveDraft } from "./api";
+import { likeItem, saveDraft } from "./api";
+import * as o from 'obscenity';
 
 export const getDateAge = (createdAt: string, type: string) => {
   const now = moment(new Date()).utcOffset('+0000'); //todays date
@@ -155,7 +156,7 @@ export const sortAndReduce = (array: BlogI[]): BlogI[] => {
 
 export const editBlog = (props: editBlogI) => {
   if (props.creatingBlog) {
-    saveDraft(props.currentUser, props.preBlog.body).then(res => {
+    saveDraft(props.currentUser, props.preBlog.body, props.jwt).then(res => {
       props.setPreBlog({ title: '', body: '', userId: props.currentUser.id, author: props.currentUser.name, tags: [], saga: '' });
       props.setCreatingBlog(false);
     })
@@ -184,4 +185,88 @@ export const handleImageUpload = (file: File) => {
     };
     reader.readAsDataURL(file);
   });
+};
+
+export const colourConverter = (image: string): {fill: string, stroke: string, tw: string} => {
+  const replaced = image.replace('.png', '')
+
+  const blue = ['cow', 'chicken', 'tiger']
+  const sky = ['cat', 'bear', 'polarbear']
+  const green = ['pig', 'dog', 'rabbit']
+  const pink = ['koala', 'frog', 'hamster']
+
+  if (blue.includes(replaced)) {
+    return { fill: '#6485DC', stroke: '#3654A6', tw: 'text-blue-500'}
+  } else if (sky.includes(replaced)) {
+    return { fill: '#7DD3FC', stroke: '#3681A6', tw: 'text-sky-300' }
+  } else if (green.includes(replaced)) {
+    return { fill: '#75EDA5', stroke: '#36A662', tw: 'text-green-300' }
+  } else if (pink.includes(replaced)) {
+    return { fill: '#F1A2E4', stroke: '#A63694', tw: 'text-pink-300' }
+  }
+  return { fill: '#fff', stroke: '#333', tw: 'text-neutral-50' }
+}
+
+export const useAutosizeTextArea = (textAreaRef: HTMLTextAreaElement | null, value: string) => {
+  useEffect(() => {
+    if (textAreaRef) {
+      // We need to reset the height momentarily to get the correct scrollHeight for the textarea
+      textAreaRef.style.height = "0px";
+      const scrollHeight = textAreaRef.scrollHeight;
+
+      // We then set the height directly, outside of the render loop
+      // Trying to set this with state or a ref will product an incorrect value.
+      textAreaRef.style.height = scrollHeight + "px";
+    }
+  }, [textAreaRef, value]);
+};
+
+// generates a random number of shares based on time of post to simulate engagement until i figure out a good way other than clicks
+export const getShares = (createdAt: string) => {
+  const now = moment(new Date()).utcOffset('+0000'); //todays date
+  const end = moment(createdAt);
+  const HOUR = Math.round(moment.duration(now.diff(end)).asHours());
+
+  if (HOUR < 8) {
+    return 0;
+  }
+  const random = Math.sin(42);
+  const shares = Math.floor(HOUR * random/10000 * 100);
+  return Math.abs(shares)
+}
+
+interface LikeBlogI {
+  userId: string
+  blog: BlogI
+  setBlog: Dispatch<SetStateAction<BlogI>>
+  liked: boolean
+}
+export const likeBlogHelper = ({ userId, blog, setBlog, liked }: LikeBlogI) => {
+  console.log(userId)
+  likeItem(userId, blog.id, blog.createdAt, blog.likes, liked).then(() => {
+    if (liked) {
+      let blogT = blog;
+      blogT.likes = blogT.likes.filter(id => id !== userId)
+      setBlog({ ...blogT })
+    } else {
+      let blogT = blog;
+      blogT.likes.push(userId)
+      setBlog({ ...blogT })
+    }
+  })
+}
+
+///// CENSORING \\\\\\
+const matcher = new o.RegExpMatcher({
+  ...o.englishDataset.build(),
+  ...o.englishRecommendedTransformers,
+});
+const censor = new o.TextCensor().setStrategy(
+  o.keepStartCensorStrategy(o.asteriskCensorStrategy()
+  ));
+
+export const censorText = (message: string) => {
+  const matches = matcher.getAllMatches(message);
+  const censored = censor.applyTo(message, matches);
+  return censored;
 };

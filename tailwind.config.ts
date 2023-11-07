@@ -19,6 +19,9 @@ const config: Config = {
         '3/4': '75%',
         '4/5': '80%',
         '9/10': '90%',
+        '1/4-screen': '25vw',
+        '2/4-screen': '50vw',
+        '3/4-screen': '75vw',
       },
       minWidth: {
         '1/4': '25%',
@@ -44,6 +47,10 @@ const config: Config = {
         '4/5': '80%',
         '9/10': '90%',
         '16': '4rem',
+        '1/4-screen': '25vh',
+        '2/4-screen': '50vh',
+        '3/4-screen': '75vh',
+        '3/5-screen': '65vh',
       },
       borderWidth: {
         '1': '1px'

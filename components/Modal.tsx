@@ -31,6 +31,7 @@ const ModalComponent = (props: ModalI) => {
       updateBlog({ setIsOpen: props.setIsOpen, preBlog: props.preBlog, setPreBlog: props.setPreBlog, originalBlog: props.orginalBlog, setOriginalBlog: props.setOriginalBlog, setCreatingBlog: props.setCreatingBlog, user: props.currentUser  });
       props.setIsEditing(false)
     } else {
+
       props.setIsOpen(false);
 
       let newSagas = props.currentUser.sagas || [];
@@ -49,7 +50,10 @@ const ModalComponent = (props: ModalI) => {
         combinedTags = []
       }
 
-      Axios.post(`${API}/createBlog`, { ...props.preBlog, userTags: combinedTags, userSagas: newSagas, createdAt: props.currentUser.createdAt }).then(res => {
+      Axios.post(`${API}/createBlog`,
+        { ...props.preBlog, userTags: combinedTags, userSagas: newSagas, createdAt: props.currentUser.createdAt },
+        { headers: { Authorization: props.currentUser.jwt } }
+      ).then(res => {
         props.setPreBlog({ title: '', body: '', userId: props.currentUser.id, author: props.currentUser.name, tags: [], saga: '' });
         props.setCreatingBlog(false);
       })
@@ -58,8 +62,8 @@ const ModalComponent = (props: ModalI) => {
 
   return (
     <Modal isOpen={props.isOpen} onRequestClose={() => props.setIsOpen(false)} ariaHideApp={false}
-      className='border-0 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 fixed focus-visible:outline-none'>
-      <div className='flex-col flex w-full bg-white p-5 shadow-md rounded-2xl'>
+      className='border-0 left-1/2 top-1/2 my-10 -translate-x-1/2 -translate-y-1/2 w-1/3 fixed focus-visible:outline-none'>
+      <div className='flex-col flex w-full max-h-screen bg-white p-5 shadow-md rounded-2xl'>
         <div className='w-full py-1 flex'>
           <span className='font-bold text-sky-300 mr-3 w-10'>Title</span>
           <input className='border-b-neutral-200 border-b-2 focus:border-sky-300 focus:outline-none' value={props.preBlog.title}

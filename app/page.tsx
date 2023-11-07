@@ -11,7 +11,7 @@ import {
 } from './helpers/helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
-
+import { v4 as uuidv4 } from 'uuid';
 import ArrowLeft from './assets/ArrowLeft';
 import ArrowRight from './assets/ArrowRight';
 import { Saga, User, PreBlog, BlogI, FilterBlog } from './types';
@@ -19,7 +19,6 @@ import ArrowDown from './assets/ArrowDown';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 import { Blog, MdEditor, SagaFilter, TagFilter } from '@/components';
-import { saveDraft } from './helpers/api';
 
 Amplify.configure({
   Auth: {
@@ -37,6 +36,8 @@ let tagsLength = 0;
 let sagasLength = 0;
 let blogsLength = 0;
 let storageArray: BlogI[] = []
+
+let jwt = '';
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: '', profileImage: '', draft: ''})
   const [pageAuthor, setPageAuthor] = useState<User>({location: '', bio: '', createdAt: '', id: '', name: '', sagas: [], tags: [], type: '', profileImage: ''})
@@ -66,10 +67,20 @@ export default function Home() {
       if (res != undefined) {
         getCurrentUser(res.username)
         getBlogs(res.username);
+        jwt = res.signInUserSession.getAccessToken().getJwtToken();
       }
     }).finally(() => {
       setLoaded(true)
-    }).catch(() => getBlogs(''))
+    }).catch(() => {
+      getBlogs('');
+      if (localStorage.getItem('userId') === null) {
+        let uuid = uuidv4();
+        localStorage.setItem('userId', uuid)
+        setCurrentUser(prev => ({...prev, id: uuid}))
+      } else {
+        setCurrentUser(prev => ({...prev, id: localStorage.getItem('userId') ?? ''}))
+      }
+    })
     
     Axios.get(`${API}/getUser`, {params: {current: false}}).then(res => {
       setPageAuthor(res.data)
@@ -92,8 +103,10 @@ export default function Home() {
     } else {
       Axios.get(`${API}/getBlogs`, { params: { userId: userId } }).then(res => {
         last_evaluated_key = res.data.last_evaluated_key
+        let tempBlogs: BlogI[] = res.data.items
+        tempBlogs = tempBlogs.filter(b => b.createdAt === "2023-10-18T22:06:07+00:00")
         setBlogs(res.data.items)
-        blogsLength = Math.ceil(res.data.items.length / PAGE_SIZE);
+        blogsLength = Math.ceil(tempBlogs.length / PAGE_SIZE);
       });
     }
   }
@@ -162,7 +175,7 @@ export default function Home() {
   const getCurrentUser = (id: string) => {
     setAuthenticated(true);
     Axios.get(`${API}/getUser`, {params: {id: id, self: true}}).then(res => {
-      setCurrentUser(res.data)
+      setCurrentUser({ ...res.data, jwt: jwt })
       setPreBlog(prev => ({ ...prev, author: res.data.name, userId: res.data.id, body: res.data.draft || '' }))
     })
   }
@@ -183,7 +196,7 @@ export default function Home() {
   }
 
   const blogItem = blogs?.map((item) => (
-    <Blog key={item.id} blog={item} owned={item.userId === currentUser.id} setPreBlog={setPreBlog} preBlog={preBlog} setBlogs={setBlogs}
+    <Blog key={item.id} blogT={item} owned={item.userId === currentUser.id} setPreBlog={setPreBlog} preBlog={preBlog} setBlogs={setBlogs}
       blogs={blogs} pageAuthor={pageAuthor} currentUser={currentUser} setOriginalBlog={setOriginalBlog} creatingBlog={creatingBlog} setCreatingBlog={setCreatingBlog}/>
   ))
 
@@ -191,9 +204,8 @@ export default function Home() {
     return <div />
   } else {
     return (
-      <div className='px-10 w-2/5 flex-grow-0 h-full flex-row justify-between items-center'>
-        <div className='w-1/4 flex-3 px-10 justify-between flex flex-col fixed left-0 sides top-0 h-fit'/>
-        <div className='w-full h-full flex flex-col py-10 no-scrollbar'>
+      <div className='flex flex-grow-0 h-full flex-row justify-between items-center'>
+        <div className='w-full h-full flex flex-col py-10 no-scrollbar items-center'>
           {creatingBlog ? (
             <MdEditor preBlog={preBlog} setPreBlog={setPreBlog} isEditing={isEditing} setIsEditing={setIsEditing}
               currentUser={currentUser} setCreatingBlog={setCreatingBlog} setCurrentUser={setCurrentUser}
@@ -206,7 +218,7 @@ export default function Home() {
             endMessage={<p className='text-neutral-400 text-center select-none'>no more blogs :(</p>}
             loader={!loaded ?'loading...' : ''}
             
-            className='overflow-visible mb-10'>
+            className='overflow-visible mb-10 justify-center items-center flex flex-col'>
             {blogItem}
             <div onClick={() => getBlogs(currentUser.id)} className={`cursor-pointer flex-row flex justify-center items-center ${last_evaluated_key === null || filtering ? 'hidden' : ''}`}>
               <span className='mr-2 text-sky-300'>load more</span>
