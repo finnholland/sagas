@@ -112,12 +112,24 @@ resource "aws_apigatewayv2_integration" "api_integ" {
   payload_format_version    = "2.0"
 }
 
+resource "aws_apigatewayv2_authorizer" "api_auth" {
+  api_id                            = aws_apigatewayv2_api.api_sagas.id
+  authorizer_type                   = "JWT"
+  identity_sources                  = ["$request.header.Authorization"]
+  name                              = "${var.name}-jwt"
+  jwt_configuration {
+    issuer   = "https://${aws_cognito_user_pool.cog_up.endpoint}"
+    audience = [ aws_cognito_user_pool_client.client.id ]
+  }
+}
+
 resource "aws_apigatewayv2_route" "api_routes" {
-  count = length(var.function_names)
-  
-  api_id    = aws_apigatewayv2_api.api_sagas.id
-  route_key = var.function_names[count.index].route
-  target    = "integrations/${aws_apigatewayv2_integration.api_integ[count.index].id}"
+  count              = length(var.function_names)
+  authorizer_id      = var.function_names[count.index].jwt ? aws_apigatewayv2_authorizer.api_auth.id : null
+  authorization_type = var.function_names[count.index].jwt ? "JWT" : null
+  api_id             = aws_apigatewayv2_api.api_sagas.id
+  route_key          = var.function_names[count.index].route
+  target             = "integrations/${aws_apigatewayv2_integration.api_integ[count.index].id}"
 }
 
 data "aws_s3_bucket" "s3_sagas" {
@@ -250,5 +262,47 @@ resource "aws_route53_record" "api_record" {
     name    = aws_apigatewayv2_domain_name.api_domain.domain_name_configuration[0].target_domain_name
     zone_id = aws_apigatewayv2_domain_name.api_domain.domain_name_configuration[0].hosted_zone_id
     evaluate_target_health = true
+  }
+}
+
+resource "aws_cognito_user_pool" "cog_up" {
+  name = "${var.name}-cog"
+  auto_verified_attributes = [ "email" ]
+  username_attributes = [ "email" ]
+  mfa_configuration = "OPTIONAL"
+  deletion_protection = "ACTIVE"
+  software_token_mfa_configuration {
+    enabled = true
+  }
+  user_attribute_update_settings {
+    attributes_require_verification_before_update = [
+        "email",
+      ]
+  }
+  username_configuration {
+    case_sensitive = false
+  }
+}
+
+resource "aws_cognito_user_pool_client" "client" {
+  name = "${aws_cognito_user_pool.cog_up.name}-client"
+
+  user_pool_id = aws_cognito_user_pool.cog_up.id
+  token_validity_units {
+    access_token  = "minutes"
+    id_token      = "minutes"
+    refresh_token = "days"
+  }
+}
+
+resource "aws_cognito_user" "user" {
+  user_pool_id = aws_cognito_user_pool.cog_up.id
+  username     = var.cog_user.id
+  attributes = {
+    "email"                 = "${var.cog_user.email}"
+    "email_verified"        = "true"
+    "phone_number"          = "${var.cog_user.phone}"
+    "phone_number_verified" = "true"
+    "sub"                   = "${var.cog_user.id}"
   }
 }
