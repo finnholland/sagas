@@ -26,6 +26,7 @@ def lambda_handler(event, context):
             "type": type,
             "body": body["body"],
             "userId": body["userId"],
+            "image": body["image"],
             "author": body["author"],
             "likes": []
         },

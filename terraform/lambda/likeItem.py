@@ -1,7 +1,5 @@
 import boto3
 import json
-import uuid
-import datetime
 import os
 tableName=os.environ.get("tableName")
 client = boto3.resource("dynamodb")
@@ -11,18 +9,17 @@ type = "comment"
 
 def lambda_handler(event, context):
     print(event)
-    # body = json.loads(event["body"])
-    body = event
-    comment = body['comment']
+    body = json.loads(event["body"])
+    # body = event
     
-    likes = comment['likes'] if comment['likes'] is not None else []
+    likes = body['likes'] if body['likes'] is not None else []
     
     likes.append(body['userId']) if body['like'] else likes.remove(body['userId'])
 
     response = table.update_item(
         Key={
-            'id': comment['id'], #comment-128264c0-1cf0-4be9-8112-8797bab15f4a-2023-11-06T05:43:44+00:00
-            'createdAt': comment['createdAt'] #2023-11-06T05:43:44+00:00
+            'id': body['id'],
+            'createdAt': body['createdAt']
         },
         UpdateExpression="SET likes = :likes",
         ExpressionAttributeValues={

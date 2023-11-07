@@ -4,8 +4,8 @@ import Edit from "@/app/assets/Edit"
 import Eye from "@/app/assets/Eye"
 import EyeOff from "@/app/assets/EyeOff"
 import { DATE_TYPE, DEFAULT_PROFILES_URL, profileImages } from "@/app/constants"
-import { deleteOrHideBlog, getComments, likeBlog } from "@/app/helpers/api"
-import { getDateAge, editBlog, handleImageUpload, colourConverter, useAutosizeTextArea, getShares } from "@/app/helpers/helpers"
+import { deleteOrHideBlog, getComments } from "@/app/helpers/api"
+import { getDateAge, editBlog, handleImageUpload, colourConverter, useAutosizeTextArea, getShares, likeBlogHelper } from "@/app/helpers/helpers"
 import { BlogI, CommentI, PreBlog, User } from "@/app/types"
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
@@ -51,7 +51,7 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
 
   const [comments, setComments] = useState<CommentI[]>([])
 
-  
+  let liked = blog.likes.includes(currentUser.id)
   const blogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
   return (
     <div className="flex-col flex mb-20 w-2/5">
       <div className="flex flex-col absolute -ml-16 items-center justify-between">
-        <div className="flex flex-col text-center text-[#333] cursor-pointer" onClick={() => likeBlog(blog.id, currentUser.id, setBlog, blog)}>
+        <div className="flex flex-col text-center text-[#333] cursor-pointer" onClick={() => likeBlogHelper({ userId: currentUser.id, blog, setBlog, liked })}>
           <Heart width={30} strokeWidth={1.5} stroke="#333" fill={blog.likes?.includes(currentUser.id) ? '#6ED0D7' : "#ffffff00"}/>
           <span>{blog.likes?.length ?? 0}</span>
         </div>
@@ -170,7 +170,7 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
         <ModalComponent setIsOpen={setIsOpen} isOpen={isOpen} preBlog={preBlog} setPreBlog={setPreBlog} blogs={blogs}
         setBlogs={setBlogs} isEditing={isEditing} setIsEditing={setIsEditing} pageAuthor={pageAuthor} currentUser={currentUser} orginalBlog={blog}
         setOriginalBlog={setOriginalBlog} setCreatingBlog={setCreatingBlog} />
-      <CommentModal isOpen={isOpenComments} setIsOpen={setIsOpenComments} userId={currentUser.id} blog={blog} setBlog={setBlog}
+      <CommentModal isOpen={isOpenComments} setIsOpen={setIsOpenComments} userId={currentUser.id} blog={blog} liked={liked} setBlog={setBlog}
         title={blog.title} saga={blog.saga} comments={comments} setComments={setComments} createdAt={blog.createdAt}  editedAt={blog.editedAt}/>
     </div>
   )
