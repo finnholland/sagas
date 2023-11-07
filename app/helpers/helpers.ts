@@ -156,7 +156,7 @@ export const sortAndReduce = (array: BlogI[]): BlogI[] => {
 
 export const editBlog = (props: editBlogI) => {
   if (props.creatingBlog) {
-    saveDraft(props.currentUser, props.preBlog.body).then(res => {
+    saveDraft(props.currentUser, props.preBlog.body, props.jwt).then(res => {
       props.setPreBlog({ title: '', body: '', userId: props.currentUser.id, author: props.currentUser.name, tags: [], saga: '' });
       props.setCreatingBlog(false);
     })
@@ -242,6 +242,7 @@ interface LikeBlogI {
   liked: boolean
 }
 export const likeBlogHelper = ({ userId, blog, setBlog, liked }: LikeBlogI) => {
+  console.log(userId)
   likeItem(userId, blog.id, blog.createdAt, blog.likes, liked).then(() => {
     if (liked) {
       let blogT = blog;

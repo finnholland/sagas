@@ -8,6 +8,7 @@ export interface editBlogI {
   blog: BlogI
   creatingBlog: boolean
   setCreatingBlog: Dispatch<SetStateAction<boolean>>
+  jwt: string
 }
 export interface updateBlogI { 
   setIsOpen: Dispatch<SetStateAction<boolean>>
