@@ -11,7 +11,7 @@ import {
 } from './helpers/helpers';
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
-
+import { v4 as uuidv4 } from 'uuid';
 import ArrowLeft from './assets/ArrowLeft';
 import ArrowRight from './assets/ArrowRight';
 import { Saga, User, PreBlog, BlogI, FilterBlog } from './types';
@@ -19,9 +19,6 @@ import ArrowDown from './assets/ArrowDown';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 import { Blog, MdEditor, SagaFilter, TagFilter } from '@/components';
-import CommentIcon from './assets/CommentIcon';
-import Heart from './assets/Heart';
-import Share from './assets/Share';
 
 Amplify.configure({
   Auth: {
@@ -74,7 +71,16 @@ export default function Home() {
       }
     }).finally(() => {
       setLoaded(true)
-    }).catch(() => getBlogs(''))
+    }).catch(() => {
+      getBlogs('');
+      if (localStorage.getItem('userId') === null) {
+        let uuid = uuidv4();
+        localStorage.setItem('userId', uuid)
+        setCurrentUser(prev => ({...prev, id: uuid}))
+      } else {
+        setCurrentUser(prev => ({...prev, id: localStorage.getItem('userId') ?? ''}))
+      }
+    })
     
     Axios.get(`${API}/getUser`, {params: {current: false}}).then(res => {
       setPageAuthor(res.data)

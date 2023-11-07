@@ -3,9 +3,9 @@ import Bin from "@/app/assets/Bin"
 import Edit from "@/app/assets/Edit"
 import Eye from "@/app/assets/Eye"
 import EyeOff from "@/app/assets/EyeOff"
-import { DATE_TYPE, DEFAULT_PROFILES_URL, profileImages } from "@/app/constants"
+import { DATE_TYPE } from "@/app/constants"
 import { deleteOrHideBlog, getComments } from "@/app/helpers/api"
-import { getDateAge, editBlog, handleImageUpload, colourConverter, useAutosizeTextArea, getShares, likeBlogHelper } from "@/app/helpers/helpers"
+import { getDateAge, editBlog, handleImageUpload, getShares, likeBlogHelper } from "@/app/helpers/helpers"
 import { BlogI, CommentI, PreBlog, User } from "@/app/types"
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
@@ -106,7 +106,7 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
             {owned ? (
               <div className='flex-row flex pl-3'>
                 <Edit className='cursor-pointer' stroke={editColour} width={25}
-                  onClick={() => { editBlog({ currentUser, setPreBlog, preBlog, blog, creatingBlog, setCreatingBlog }); setIsEditing(!isEditing) }}
+                  onClick={() => { editBlog({ currentUser, setPreBlog, preBlog, blog, creatingBlog, setCreatingBlog, jwt: currentUser.jwt ?? '' }); setIsEditing(!isEditing) }}
                   onMouseEnter={() => setEditColour('#0092B2')} onMouseLeave={() => setEditColour('#9C9C9C')}/>
                 {blog.visible && !eyeHover || !blog.visible && eyeHover ?
                   (<Eye className='mx-3 cursor-pointer' stroke='#9C9C9C' width={25} 
