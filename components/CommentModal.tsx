@@ -3,7 +3,7 @@ import Send from '@/app/Send'
 import Heart from '@/app/assets/Heart'
 import Refresh from '@/app/assets/Refresh'
 import { DATE_TYPE, DEFAULT_PROFILES_URL, profileImages } from '@/app/constants'
-import { colourConverter, getDateAge, getShares, useAutosizeTextArea } from '@/app/helpers/helpers'
+import { colourConverter, getDateAge, getShares, likeBlogHelper, useAutosizeTextArea } from '@/app/helpers/helpers'
 import { BlogI, CommentI, User } from '@/app/types'
 import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 import Image from "next/image"
@@ -13,7 +13,7 @@ import Modal from 'react-modal';
 import { Bubble } from './Bubble'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import Mention from '@/app/assets/Mention'
-import { createComment, likeBlog, likeComment } from '@/app/helpers/api'
+import { createComment, likeItem } from '@/app/helpers/api'
 import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment'
 import Save from '@/app/assets/Save'
@@ -29,14 +29,20 @@ interface CommentModalI {
   title: string
   createdAt: string
   saga: string
-  editedAt: string
+  editedAt: string,
+  liked: boolean,
 }
-const CommentModal: React.FC<CommentModalI> = ({userId, blog, setBlog, comments, setComments, isOpen, setIsOpen, title, createdAt, saga, editedAt}) => {
+const CommentModal: React.FC<CommentModalI> = ({userId, blog, setBlog, comments, setComments, isOpen, setIsOpen, title, createdAt, saga, editedAt, liked}) => {
+  let indexT: number = profileImages.findIndex(i => i === (localStorage.getItem('localImage')) ?? '')
+  
+  
+  const [local, setLocal] = useState(localStorage.getItem('localAuthor') !== null)
   const [comment, setComment] = useState('')
-  const [author, setAuthor] = useState('binn hoola')
-  const [index, setIndex] = useState(Math.floor(Math.random() * ((profileImages.length -1) - 0 + 1)) + 0)
+  const [author, setAuthor] = useState(localStorage.getItem('localAuthor') ?? '')
+  const [index, setIndex] = useState(indexT >= 0 ? indexT : Math.floor(Math.random() * ((profileImages.length -1) - 0 + 1)) + 0)
   const [sendHover, setSendHover] = useState(false)
-
+  const [remember, setRemember] = useState(false)
+  
   const incrementIndex = () => {
     if (index >= profileImages.length -1) {
       setIndex(0)
@@ -46,10 +52,14 @@ const CommentModal: React.FC<CommentModalI> = ({userId, blog, setBlog, comments,
   }
 
   const createCommentHelper = () => {
-    
+    if (remember) {
+      localStorage.setItem('localAuthor', author)
+      localStorage.setItem('localImage', profileImages[index])
+      setLocal(localStorage.getItem('localAuthor') !== null)
+    }
     createComment(userId, blog.id, author, comment, profileImages[index]).then(res => {
       const tempComments = comments
-      tempComments.push({
+      tempComments.unshift({
         id: uuidv4(),
         author: author,
         body: comment,
@@ -60,10 +70,8 @@ const CommentModal: React.FC<CommentModalI> = ({userId, blog, setBlog, comments,
       setComments(tempComments)
       setComment('')
     })
-    
   }
 
-  
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   useAutosizeTextArea(textAreaRef.current, comment);
   const handleChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -74,12 +82,17 @@ const CommentModal: React.FC<CommentModalI> = ({userId, blog, setBlog, comments,
     const val = evt.target.value.replace(/[^\w.\-]/, '_');
     setAuthor(val);
   };
+  const storageHelper = () => {
+    localStorage.removeItem('localAuthor');
+    localStorage.removeItem('localImage');
+    setLocal(localStorage.getItem('localAuthor') !== null);
+  };
 
   return (
     <Modal isOpen={isOpen} onRequestClose={() => setIsOpen(false)} ariaHideApp={false}
       className='border-0 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2/5 fixed focus-visible:outline-none'>
       <div className="flex flex-col absolute -ml-20 p-4 overflow-scroll justify-between bg-white shadow-md rounded-2xl">
-        <div className="flex flex-col text-center text-[#333] cursor-pointer" onClick={() => likeBlog(blog.id, userId, setBlog, blog)}>
+        <div className="flex flex-col text-center text-[#333] cursor-pointer" onClick={() => likeBlogHelper({ userId, blog, setBlog, liked })}>
           <Heart width={30} strokeWidth={1.5} stroke="#333" fill={blog.likes?.includes(userId) ? '#6ED0D7' : "#ffffff00"}/>
           <span>{blog.likes?.length ?? 0}</span>
         </div>
@@ -110,18 +123,25 @@ const CommentModal: React.FC<CommentModalI> = ({userId, blog, setBlog, comments,
         <div className="flex flex-row my-6 bottom-1 border-sky-300 px-8 items-center">
           
           <div className='flex-row flex w-full items-end'>
-            <div onClick={() => incrementIndex()} className="mr-2 relative h-fit cursor-pointer">
+            <div onClick={() => incrementIndex()} className="mr-2 relative flex cursor-pointer items-center w-fit">
               <Refresh className="absolute -top-1.5 -left-1.5 -right-1.5 -bottom-1.5" fill={ colourConverter(profileImages[index]).stroke} />
-              <Image className='rounded-full m-0 h-fit mr-2' src={DEFAULT_PROFILES_URL + profileImages[index]} alt='profile' width={40} height={40} />
+              <Image className='rounded-full m-0' src={DEFAULT_PROFILES_URL + profileImages[index]} alt='profile' width={45} height={45} />
             </div>
             <div className='flex flex-col w-full'>
-              <div className='flex flex-row items-center'>
+              <div className='flex flex-row items-center justify-between mx-5'>
                 <textarea ref={textAreaRef} value={author} onChange={handleChangeAuthor} placeholder="your name"
-                  className={`w-full mx-5 resize-none font-light text-sm mb-2 h-6 focus-visible:outline-none`}
+                  className={`resize-none font-light text-sm h-6 focus-visible:outline-none`}
                   style={{ color: (colourConverter(profileImages[index]).fill) }} />
+                <div>
+                  <label htmlFor="default-checkbox" className="text-xs font-light text-gray-600 mr-2 select-none">remember</label>
+                  <input onChange={(e) => setRemember(e.target.checked)} id="default-checkbox" type="checkbox" value="" className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 rounded"/>
+                  {local ? 
+                    <span className="text-xs font-light text-red-600 ml-4 select-none" onClick={() => storageHelper()}>
+                      clear
+                    </span> : null}
+                  
+                </div>
               </div>
-
-
               <textarea ref={textAreaRef} value={comment} onChange={handleChange} placeholder="leave a comment"
               className="mx-5 resize-none flex font-normal text-sm rounded-2xl bg-neutral-100 px-4 py-2 h-9" />
             </div>
@@ -139,7 +159,7 @@ const CommentModal: React.FC<CommentModalI> = ({userId, blog, setBlog, comments,
             
             className='max-h-3/4-screen px-8 overflow-scroll flex flex-col'>
             {comments.map((c) => {
-              return <Comment key={c.id} comment={c} userId={userId} setComment={setComment} comments={comments} setComments={setComments} />
+              return <Comment key={c.id} comment={c} userId={userId} setComment={setComment}/>
             })}
         </InfiniteScroll>
       </div>
@@ -152,8 +172,6 @@ interface CommentProps {
   comment: CommentI,
   userId: string,
   setComment: Dispatch<SetStateAction<string>>
-  comments: CommentI[]
-  setComments: Dispatch<SetStateAction<CommentI[]>>
 }
 const Comment = ({ comment, userId, setComment }: CommentProps) => {
   const [likes, setLikes] = useState(comment.likes)
@@ -165,7 +183,7 @@ const Comment = ({ comment, userId, setComment }: CommentProps) => {
   }, [comment.image])
 
   const toggleLike = () => {
-    likeComment(userId, comment, liked).then(res => {
+    likeItem(userId, comment.id, comment.createdAt, comment.likes, liked).then(() => {
       if (liked) {
         let commentT = comment;
         commentT.likes =commentT.likes.filter(id => id !== userId)

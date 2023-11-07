@@ -30,7 +30,7 @@ export const MdEditor = (props: MdEditorI) => {
   const [isOpen, setIsOpen] = useState(false)
 
   const saveDraftHelper = () => {
-    saveDraft(props.currentUser, props.preBlog.body).then(res => {
+    saveDraft(props.currentUser, props.preBlog.body, props.currentUser.jwt ?? '').then(res => {
       props.setPreBlog({ title: '', body: '', userId: props.currentUser.id, author: props.currentUser.name, tags: [], saga: '' });
       props.setCreatingBlog(false);
       props.setCurrentUser(prev => ({...prev, draft: props.preBlog.body}))
@@ -38,7 +38,7 @@ export const MdEditor = (props: MdEditorI) => {
   }
 
   return (
-    <div className='mb-10 w-2/5 px-10'>
+    <div className='mb-10 w-2/5'>
       <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full mb-5'>
         <Editor
           value={props.preBlog.body}

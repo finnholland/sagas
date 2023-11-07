@@ -5,7 +5,7 @@ import { BlogI, PreBlog, Saga } from "../types";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { editBlogI } from "./interface";
 import { v4 as uuidv4 } from 'uuid';
-import { saveDraft } from "./api";
+import { likeItem, saveDraft } from "./api";
 import * as o from 'obscenity';
 
 export const getDateAge = (createdAt: string, type: string) => {
@@ -233,6 +233,26 @@ export const getShares = (createdAt: string) => {
   const random = Math.sin(42);
   const shares = Math.floor(HOUR * random/10000 * 100);
   return Math.abs(shares)
+}
+
+interface LikeBlogI {
+  userId: string
+  blog: BlogI
+  setBlog: Dispatch<SetStateAction<BlogI>>
+  liked: boolean
+}
+export const likeBlogHelper = ({ userId, blog, setBlog, liked }: LikeBlogI) => {
+  likeItem(userId, blog.id, blog.createdAt, blog.likes, liked).then(() => {
+    if (liked) {
+      let blogT = blog;
+      blogT.likes = blogT.likes.filter(id => id !== userId)
+      setBlog({ ...blogT })
+    } else {
+      let blogT = blog;
+      blogT.likes.push(userId)
+      setBlog({ ...blogT })
+    }
+  })
 }
 
 ///// CENSORING \\\\\\

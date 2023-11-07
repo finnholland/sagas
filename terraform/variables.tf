@@ -52,10 +52,15 @@ variable "function_names" {
       jwt   = false
     },
     {
-      name  = "likeComment"
-      route = "POST /likeComment"
+      name  = "likeItem"
+      route = "POST /likeItem"
       jwt   = false
-    }
+    },
+    {
+      name  = "getComments"
+      route = "GET /getComments"
+      jwt   = false
+    },
   ]
 }
 

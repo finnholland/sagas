@@ -38,6 +38,7 @@ def lambda_handler(event, context):
             "body": body["body"],
             "userId": body["userId"],
             "author": body["author"],
+            "likes": [],
             "visible": True,
             "tags": lowerTags,
             "saga": lowerSaga,
