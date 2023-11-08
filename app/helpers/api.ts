@@ -1,9 +1,8 @@
 import Axios from 'axios';
 import { API } from '../constants';
 import { updateBlogI } from './interface';
-import { BlogI, CommentI, PreBlog, User } from '../types';
+import { CommentI, User } from '../types';
 import { Dispatch, SetStateAction } from 'react';
-import { censorText } from './helpers';
 
 export const updateBlog = (props: updateBlogI) => {
   if (props.originalBlog !== undefined && props.originalBlog) {
@@ -42,7 +41,7 @@ export const getComments = async (blogId: string, setComments: Dispatch<SetState
 }
 
 export const createComment = async (userId: string, blogId: string, author: string, body: string, image: string) => {
-  Axios.post(`${API}/createComment`, { userId: userId, blogId: blogId, author: author, body: censorText(body), image: image })
+  Axios.post(`${API}/createComment`, { userId: userId, blogId: blogId, author: author, body: body, image: image })
 }
 
 export const likeItem = async (userId: string, id: string, createdAt: string, likes: string[], liked: boolean) => {
