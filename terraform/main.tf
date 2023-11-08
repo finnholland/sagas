@@ -143,15 +143,25 @@ data "archive_file" "archive_file" {
   output_path = "${each.value.name}.zip"
 }
 
+resource "aws_lambda_layer_version" "lambda_layer" {
+  filename   = "python.zip"
+  layer_name = "${var.name}_modules"
+  description = "Extra python modules required by functions"
+
+  compatible_runtimes = [ var.runtime ]
+  compatible_architectures = [ "x86_64" ]
+}
+
 resource "aws_lambda_function" "lambda_functions" {
   count            = length(var.function_names)  
   function_name    = "${var.function_names[count.index].name}_${var.env}"
   filename         = "${var.function_names[count.index].name}.zip"
   source_code_hash = data.archive_file.archive_file[count.index].output_base64sha256
   role             = aws_iam_role.lambda_role.arn
-  runtime          = "python3.11"
+  runtime          = var.runtime
   handler          = "${var.function_names[count.index].name}.lambda_handler"
   timeout          = 3
+  layers           = var.function_names[count.index].layers ? [ aws_lambda_layer_version.lambda_layer.arn ] : null
   environment {
     variables = {
       tableName = aws_dynamodb_table.ddb_sagas.name

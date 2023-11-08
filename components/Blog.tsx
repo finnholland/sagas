@@ -170,7 +170,7 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
         <ModalComponent setIsOpen={setIsOpen} isOpen={isOpen} preBlog={preBlog} setPreBlog={setPreBlog} blogs={blogs}
         setBlogs={setBlogs} isEditing={isEditing} setIsEditing={setIsEditing} pageAuthor={pageAuthor} currentUser={currentUser} orginalBlog={blog}
         setOriginalBlog={setOriginalBlog} setCreatingBlog={setCreatingBlog} />
-      <CommentModal isOpen={isOpenComments} setIsOpen={setIsOpenComments} userId={currentUser.id} blog={blog} liked={liked} setBlog={setBlog}
+      <CommentModal isOpen={isOpenComments} setIsOpen={setIsOpenComments} name={currentUser.name} userId={currentUser.id} blog={blog} liked={liked} setBlog={setBlog}
         title={blog.title} saga={blog.saga} comments={comments} setComments={setComments} createdAt={blog.createdAt}  editedAt={blog.editedAt}/>
     </div>
   )

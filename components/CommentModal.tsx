@@ -20,6 +20,7 @@ import Save from '@/app/assets/Save'
 
 interface CommentModalI {
   userId: string
+  name: string
   blog: BlogI
   setBlog: Dispatch<SetStateAction<BlogI>>
   comments: CommentI[]
@@ -32,13 +33,13 @@ interface CommentModalI {
   editedAt: string,
   liked: boolean,
 }
-const CommentModal: React.FC<CommentModalI> = ({userId, blog, setBlog, comments, setComments, isOpen, setIsOpen, title, createdAt, saga, editedAt, liked}) => {
+const CommentModal: React.FC<CommentModalI> = ({userId, name, blog, setBlog, comments, setComments, isOpen, setIsOpen, title, createdAt, saga, editedAt, liked}) => {
   let indexT: number = profileImages.findIndex(i => i === (localStorage.getItem('localImage')) ?? '')
   
   
   const [local, setLocal] = useState(localStorage.getItem('localAuthor') !== null)
   const [comment, setComment] = useState('')
-  const [author, setAuthor] = useState(localStorage.getItem('localAuthor') ?? '')
+  const [author, setAuthor] = useState('')
   const [index, setIndex] = useState(indexT >= 0 ? indexT : Math.floor(Math.random() * ((profileImages.length -1) - 0 + 1)) + 0)
   const [sendHover, setSendHover] = useState(false)
   const [remember, setRemember] = useState(false)
@@ -50,6 +51,14 @@ const CommentModal: React.FC<CommentModalI> = ({userId, blog, setBlog, comments,
       setIndex(index + 1)
     }
   }
+
+  useEffect(() => {
+    if (localStorage.getItem('localAuthor') !== null) {
+      setAuthor(localStorage.getItem('localAuthor') ?? '')
+    } else {
+      setAuthor(name?.replace(' ', '_') ?? '')
+    }
+  }, [name])
 
   const createCommentHelper = () => {
     if (remember) {
@@ -91,7 +100,7 @@ const CommentModal: React.FC<CommentModalI> = ({userId, blog, setBlog, comments,
   return (
     <Modal isOpen={isOpen} onRequestClose={() => setIsOpen(false)} ariaHideApp={false}
       className='border-0 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2/5 fixed focus-visible:outline-none'>
-      <div className="flex flex-col absolute -ml-20 p-4 overflow-scroll justify-between bg-white shadow-md rounded-2xl">
+      <div className="flex flex-col absolute -ml-20 p-4 justify-between bg-white shadow-md rounded-2xl">
         <div className="flex flex-col text-center text-[#333] cursor-pointer" onClick={() => likeBlogHelper({ userId, blog, setBlog, liked })}>
           <Heart width={30} strokeWidth={1.5} stroke="#333" fill={blog.likes?.includes(userId) ? '#6ED0D7' : "#ffffff00"}/>
           <span>{blog.likes?.length ?? 0}</span>
@@ -147,7 +156,7 @@ const CommentModal: React.FC<CommentModalI> = ({userId, blog, setBlog, comments,
             </div>
             
 
-            <Send className="cursor-pointer" onClick={() => { comment.trim() === '' ? null : createCommentHelper() }}
+            <Send className="cursor-pointer" onClick={() => { (comment.trim() === '' || author.trim() === '') ? null : createCommentHelper() }}
                 onMouseEnter={() => setSendHover(true)} onMouseLeave={() => setSendHover(false)} strokeWidth={1} height={40} fill={sendHover ? "#75D0ED" : "#ffffff00"} stroke="#333" />
           </div>
         </div>
