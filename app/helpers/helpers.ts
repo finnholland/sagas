@@ -6,7 +6,6 @@ import { Dispatch, SetStateAction, useEffect } from "react";
 import { editBlogI } from "./interface";
 import { v4 as uuidv4 } from 'uuid';
 import { likeItem, saveDraft } from "./api";
-import * as o from 'obscenity';
 
 export const getDateAge = (createdAt: string, type: string) => {
   const now = moment(new Date()).utcOffset('+0000'); //todays date
@@ -255,18 +254,3 @@ export const likeBlogHelper = ({ userId, blog, setBlog, liked }: LikeBlogI) => {
     }
   })
 }
-
-///// CENSORING \\\\\\
-const matcher = new o.RegExpMatcher({
-  ...o.englishDataset.build(),
-  ...o.englishRecommendedTransformers,
-});
-const censor = new o.TextCensor().setStrategy(
-  o.keepStartCensorStrategy(o.asteriskCensorStrategy()
-  ));
-
-export const censorText = (message: string) => {
-  const matches = matcher.getAllMatches(message);
-  const censored = censor.applyTo(message, matches);
-  return censored;
-};
