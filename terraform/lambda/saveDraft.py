@@ -8,7 +8,7 @@ table = client.Table(tableName)
 
 def lambda_handler(event, context):
     body = json.loads(event["body"])
-
+    body.pop('jwt', None)
     response = table.put_item(
         TableName=tableName,   
         Item=body

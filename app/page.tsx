@@ -65,9 +65,9 @@ export default function Home() {
   useEffect(() => {
     Auth.currentAuthenticatedUser().then((res) => {
       if (res != undefined) {
+        jwt = res.signInUserSession.getAccessToken().getJwtToken();
         getCurrentUser(res.username)
         getBlogs(res.username);
-        jwt = res.signInUserSession.getAccessToken().getJwtToken();
       }
     }).finally(() => {
       setLoaded(true)
@@ -183,6 +183,7 @@ export default function Home() {
   const authenticate = (login: boolean) => {
     if (login) {
       Auth.signIn(email, password).then((res) => {
+        jwt = res.signInUserSession.getAccessToken().getJwtToken();
         getCurrentUser(res.username)
       })
     } else {
