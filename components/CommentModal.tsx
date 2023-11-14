@@ -114,7 +114,7 @@ const CommentModal: React.FC<CommentModalI> = ({userId, name, blog, setBlog, com
           <span>{getShares(blog.createdAt)}</span>
         </div>
       </div>
-      <div className="flex flex-col w-full p-8 bg-white rounded-2xl shadow-md">
+      <div className="flex flex-col w-full p-8 bg-white rounded-2xl shadow-md min-h-[226px]">
 
         <div className='flex-row flex justify-between items-center'>
           <div className='flex-col flex justify-between'>
