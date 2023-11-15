@@ -1,22 +1,16 @@
 'use client'
-import Send from '@/app/Send'
-import Heart from '@/app/assets/Heart'
-import Refresh from '@/app/assets/Refresh'
 import { DATE_TYPE, DEFAULT_PROFILES_URL, profileImages } from '@/app/constants'
 import { colourConverter, getDateAge, getShares, likeBlogHelper, useAutosizeTextArea } from '@/app/helpers/helpers'
 import { BlogI, CommentI, User } from '@/app/types'
 import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 import Image from "next/image"
-import Share from '@/app/assets/Share'
-import CommentIcon from '@/app/assets/CommentIcon'
 import Modal from 'react-modal';
 import { Bubble } from './Bubble'
 import InfiniteScroll from 'react-infinite-scroll-component'
-import Mention from '@/app/assets/Mention'
 import { createComment, likeItem } from '@/app/helpers/api'
 import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment'
-import Save from '@/app/assets/Save'
+import {Heart, Refresh, Share, CommentIcon, Mention, Send} from '@/app/assets'
 
 interface CommentModalI {
   userId: string
@@ -67,8 +61,8 @@ const CommentModal: React.FC<CommentModalI> = ({userId, name, blog, setBlog, com
       setLocal(localStorage.getItem('localAuthor') !== null)
     }
     createComment(userId, blog.id, author, comment, profileImages[index]).then(res => {
-      const tempComments = comments
-      tempComments.unshift({
+      const commentsT = comments
+      commentsT.unshift({
         id: uuidv4(),
         author: author,
         body: comment,
@@ -76,7 +70,7 @@ const CommentModal: React.FC<CommentModalI> = ({userId, name, blog, setBlog, com
         createdAt: moment().format('YYYY-MM-DDTHH:mm:ssZ'),
         likes: []
       })
-      setComments(tempComments)
+      setComments(commentsT)
       setComment('')
     })
   }
@@ -157,7 +151,7 @@ const CommentModal: React.FC<CommentModalI> = ({userId, name, blog, setBlog, com
             
 
             <Send className="cursor-pointer" onClick={() => { (comment.trim() === '' || author.trim() === '') ? null : createCommentHelper() }}
-                onMouseEnter={() => setSendHover(true)} onMouseLeave={() => setSendHover(false)} strokeWidth={1} height={40} fill={sendHover ? "#75D0ED" : "#ffffff00"} stroke="#333" />
+              onMouseEnter={() => setSendHover(true)} onMouseLeave={() => setSendHover(false)} strokeWidth={1} height={40} aria-atomic={sendHover} stroke="#333" />
           </div>
         </div>
         <InfiniteScroll
