@@ -37,14 +37,14 @@ export interface User {
   id: string,
   profileImage: string,
   name: string,
-  sagas: Saga[],
+  sagas: SagaI[],
   tags: string[],
   type: string
   draft?: string
   jwt?: string
 }
 
-export interface Saga {
+export interface SagaI {
   saga: string,
   updated: string
 }

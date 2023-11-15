@@ -1,7 +1,7 @@
 import moment from "moment";
 import { DATE_TYPE, ENV, REGION, S3_BUCKET, S3_URL } from "../constants";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { BlogI, PreBlog, Saga } from "../types";
+import { BlogI, PreBlog, SagaI } from "../types";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { editBlogI } from "./interface";
 import { v4 as uuidv4 } from 'uuid';
@@ -91,7 +91,7 @@ export const isEmpty = (str: string): boolean => {
   return str.trim() === "";
 }
 
-export const sortSagaFilters = (filters: Saga[]): Saga[] => {
+export const sortSagaFilters = (filters: SagaI[]): SagaI[] => {
   const sorted = filters.sort((a, b) => moment(b.updated, 'YYYY-MM-DDT00:00:00').diff(moment(a.updated, 'YYYY-MM-DDT00:00:00')))
   return sorted
 }

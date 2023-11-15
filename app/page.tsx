@@ -12,13 +12,11 @@ import {
 import { Amplify, Auth } from 'aws-amplify';
 import { userPool } from './constants';
 import { v4 as uuidv4 } from 'uuid';
-import ArrowLeft from './assets/ArrowLeft';
-import ArrowRight from './assets/ArrowRight';
-import { Saga, User, PreBlog, BlogI, FilterBlog } from './types';
-import ArrowDown from './assets/ArrowDown';
+import { SagaI, User, PreBlog, BlogI, FilterBlog } from './types';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 import { Blog, MdEditor, SagaFilter, TagFilter } from '@/components';
+import {FinnHolland, GitHub, LinkedIn, ArrowDown, ArrowRight, ArrowLeft} from './assets/';
 
 Amplify.configure({
   Auth: {
@@ -53,7 +51,7 @@ export default function Home() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  const [pageSagas, setPageSagas] = useState<Saga[]>([]);
+  const [pageSagas, setPageSagas] = useState<SagaI[]>([]);
   const [pageTags, setPageTags] = useState<string[]>([]);
   const [pageNumber, setPageNumber] = useState({tagPage: 1, sagaPage: 1, blogPage: 1})
   const [filterSaga, setFilterSaga] = useState('')
@@ -103,10 +101,10 @@ export default function Home() {
     } else {
       Axios.get(`${API}/getBlogs`, { params: { userId: userId } }).then(res => {
         last_evaluated_key = res.data.last_evaluated_key
-        let tempBlogs: BlogI[] = res.data.items
-        tempBlogs = tempBlogs.filter(b => b.createdAt === "2023-10-18T22:06:07+00:00")
+        let blogsT: BlogI[] = res.data.items
+        blogsT = blogsT.filter(b => b.createdAt === "2023-10-18T22:06:07+00:00")
         setBlogs(res.data.items)
-        blogsLength = Math.ceil(tempBlogs.length / PAGE_SIZE);
+        blogsLength = Math.ceil(blogsT.length / PAGE_SIZE);
       });
     }
   }
@@ -307,7 +305,17 @@ export default function Home() {
                 </span>
               </div>
             </div>
-
+            <div className='flex flex-row mt-8 justify-center'>
+              <a href='https://www.finnholland.dev/' target='_blank'>
+                <FinnHolland height={25} />
+              </a>
+              <a href='https://github.com/finnholland' target='_blank' className='mx-8'>
+                <GitHub fill='#24292F' height={25}/>
+              </a>
+              <a href='https://www.linkedin.com/in/finnholland/' target='_blank'>
+                <LinkedIn fill='#006699' height={25}/>
+              </a>
+            </div>
           </div>
           <div>
             {authenticated ? (<span className='text-sky-500 underline cursor-pointer' onClick={() => authenticate(false)}>log out</span>) : (

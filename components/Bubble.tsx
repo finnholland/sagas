@@ -1,5 +1,4 @@
-import Plus from "@/app/assets/Plus"
-import Remove from "@/app/assets/Remove"
+import {Plus, Remove } from "@/app/assets"
 import { addOrRemoveTag } from "@/app/helpers/helpers"
 import { PreBlog } from "@/app/types"
 import { Dispatch, SetStateAction } from "react"
