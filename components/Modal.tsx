@@ -1,4 +1,4 @@
-import Plus from '@/app/assets/Plus'
+import {Plus} from '@/app/assets'
 import { addOrRemoveTag, isEmpty } from '@/app/helpers/helpers'
 import { BlogI, PreBlog, User } from '@/app/types'
 import React, { Dispatch, SetStateAction, useState } from 'react'
