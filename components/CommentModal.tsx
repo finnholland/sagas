@@ -151,7 +151,7 @@ const CommentModal: React.FC<CommentModalI> = ({userId, name, blog, setBlog, com
             
 
             <Send className="cursor-pointer" onClick={() => { (comment.trim() === '' || author.trim() === '') ? null : createCommentHelper() }}
-                onMouseEnter={() => setSendHover(true)} onMouseLeave={() => setSendHover(false)} strokeWidth={1} height={40} fill={sendHover ? "#75D0ED" : "#ffffff00"} stroke="#333" />
+              onMouseEnter={() => setSendHover(true)} onMouseLeave={() => setSendHover(false)} strokeWidth={1} height={40} aria-atomic={sendHover} stroke="#333" />
           </div>
         </div>
         <InfiniteScroll

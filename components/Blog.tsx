@@ -40,8 +40,8 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
   
   const [blog, setBlog] = useState<BlogI>(blogT)
 
-  const [editColour, setEditColour] = useState('#9C9C9C')
-  const [binColour, setBinColour] = useState('#9C4F58')
+  const [edit, setEdit] = useState(false)
+  const [bin, setBin] = useState(false)
 
   const [comments, setComments] = useState<CommentI[]>([])
 
@@ -99,9 +99,9 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
             <Bubble name={blog.saga} type='saga' />
             {owned ? (
               <div className='flex-row flex pl-3'>
-                <Edit className='cursor-pointer' stroke={editColour} width={25}
+                <Edit className='cursor-pointer' aria-atomic={edit} width={25}
                   onClick={() => { editBlog({ currentUser, setPreBlog, preBlog, blog, creatingBlog, setCreatingBlog, jwt: currentUser.jwt ?? '' }); setIsEditing(!isEditing) }}
-                  onMouseEnter={() => setEditColour('#0092B2')} onMouseLeave={() => setEditColour('#9C9C9C')}/>
+                  onMouseEnter={() => setEdit(true)} onMouseLeave={() => setEdit(false)}/>
                 {blog.visible && !eyeHover || !blog.visible && eyeHover ?
                   (<Eye className='mx-3 cursor-pointer' stroke='#9C9C9C' width={25} 
                     onMouseEnter={() => setEyeHover(true)} onMouseLeave={() => setEyeHover(false)}
@@ -109,8 +109,8 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
                   (<EyeOff className='mx-3 cursor-pointer' stroke='#0092B2' width={25}
                     onMouseEnter={() => setEyeHover(true)} onMouseLeave={() => setEyeHover(false)}
                     onClick={() => toggleVisibility(false)} />)}
-                <Bin className='cursor-pointer' stroke={binColour} width={25}
-                  onClick={() => setIsOpenBin(true)} onMouseEnter={() => setBinColour('#DD2E44')} onMouseLeave={() => setBinColour('#9C4F58')}/>
+              <Bin className='cursor-pointer' width={25} aria-atomic={bin} onClick={() => setIsOpenBin(true)}
+                onMouseEnter={() => setBin(true)} onMouseLeave={() => setBin(false)} />
               </div>
             ) : (null)}
           </div>
