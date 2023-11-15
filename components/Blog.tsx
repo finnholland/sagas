@@ -1,8 +1,4 @@
 'use client'
-import Bin from "@/app/assets/Bin"
-import Edit from "@/app/assets/Edit"
-import Eye from "@/app/assets/Eye"
-import EyeOff from "@/app/assets/EyeOff"
 import { DATE_TYPE } from "@/app/constants"
 import { deleteOrHideBlog, getComments } from "@/app/helpers/api"
 import { getDateAge, editBlog, handleImageUpload, getShares, likeBlogHelper } from "@/app/helpers/helpers"
@@ -14,9 +10,7 @@ import { Bubble } from "."
 import dynamic from "next/dynamic"
 import Modal from 'react-modal';
 import ModalComponent from "./Modal"
-import CommentIcon from "@/app/assets/CommentIcon"
-import Share from "@/app/assets/Share"
-import Heart from "@/app/assets/Heart"
+import { Heart, Share, CommentIcon, EyeOff, Eye, Edit, Bin } from "@/app/assets"
 import CommentModal from "./CommentModal"
 const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
@@ -61,16 +55,16 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
   const toggleVisibility = (state: boolean) => {
     deleteOrHideBlog(false, blog.visible, blog.id, blog.createdAt, currentUser.jwt).then(res => {
       setEyeHover(state);
-      const tempBlogs = blogs;
-      tempBlogs[blogs.findIndex(b => b.id === blog.id)].visible = state;
-      setBlogs(tempBlogs);
+      const blogsT = blogs;
+      blogsT[blogs.findIndex(b => b.id === blog.id)].visible = state;
+      setBlogs(blogsT);
       setIsOpenBin(false);
     }).catch((e: Error) => alert(e.message))
   }
   const deleteBlog = () => {
     deleteOrHideBlog(true, false, blog.id, blog.createdAt, currentUser.jwt).then(res => {
-      const tempBlogs = blogs.filter(b => b.id !== blog.id);
-      setBlogs(tempBlogs);
+      const blogsT = blogs.filter(b => b.id !== blog.id);
+      setBlogs(blogsT);
       setIsOpenBin(false);
     }).catch((e: Error) => alert(e.message))
   }

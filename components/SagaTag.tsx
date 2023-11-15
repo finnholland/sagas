@@ -1,5 +1,4 @@
-import Plus from "@/app/assets/Plus"
-import Remove from "@/app/assets/Remove"
+import {Plus, Remove } from "@/app/assets"
 import { DATE_TYPE } from "@/app/constants"
 import { toggleSagaFilter, getDateAge, toggleTagFilter } from "@/app/helpers/helpers"
 import { Dispatch, SetStateAction } from "react"
