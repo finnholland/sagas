@@ -4,7 +4,7 @@ import { deleteOrHideBlog, getComments } from "@/app/helpers/api"
 import { getDateAge, editBlog, handleImageUpload, getShares, likeBlogHelper } from "@/app/helpers/helpers"
 import { BlogI, CommentI, PreBlog, User } from "@/app/types"
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
-import ReactMarkdown from "react-markdown"
+import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Bubble } from "."
 import dynamic from "next/dynamic"
@@ -12,6 +12,7 @@ import Modal from 'react-modal';
 import ModalComponent from "./Modal"
 import { Heart, Share, CommentIcon, EyeOff, Eye, Edit, Bin } from "@/app/assets"
 import CommentModal from "./CommentModal"
+import rehypeRaw, {Options} from "rehype-raw"
 const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
 });
@@ -127,7 +128,7 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
                   onChange={(text) => setPreBlog(prev => ({ ...prev, body: text.text }))}
                   plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
                   className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500 max-w-full'
-                  renderHTML={text => <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{text}</ReactMarkdown>}
+                  renderHTML={text => <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{text}</Markdown>}
                 />
               </div>
               <div className='flex-row flex justify-between mt-3'>
@@ -136,12 +137,13 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
                   <button onClick={() => setIsOpen(true)} disabled={preBlog.body === ''} className={`${preBlog.body === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>confirm</button>
                 </div>
           </div></div>) : (
-              <div ref={blogRef}>
-                <ReactMarkdown className={`${blog.tags.length > 0 ? 'mb-5' : ''} markdown`} remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>
-                  {blog.body}
-                </ReactMarkdown>
-              </div>
-        )}
+            <div ref={blogRef}>
+              <Markdown className={`${blog.tags.length > 0 ? 'mb-5' : ''} markdown`} 
+              rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
+                {blog.body}
+              </Markdown>
+            </div>
+          )}
         
         <div className='flex-row flex flex-wrap'>
           {blog.tags.map((tag) => {
