@@ -58,7 +58,7 @@ export const MdEditor = (props: MdEditorI) => {
           className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500 max-w-full'
           renderHTML={text =>
             <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, [rehypeExternalLinks, options]]}>
-              {text}
+              {text.replace(/<iframe width=".[0-9]*" height=".[0-9]*"/, "<iframe")}
             </ReactMarkdown>}
         />
       </div>
