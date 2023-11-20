@@ -49,7 +49,7 @@ export const MdEditor = (props: MdEditorI) => {
     if (matches && matches.length === 3) {
       const width = matches[1]; // Extracted width value
       const height = matches[2];
-      text = text.replace(matches[0], `<iframe style="aspectRatio:${width}/${height}" `);
+      text = text.replace(matches[0], `<iframe style="aspectRatio:${width}/${height}"`);
       text = text.replace(/allow.*" /, "");
       text = text.replace(/frameborder.*" /, "");
     }
