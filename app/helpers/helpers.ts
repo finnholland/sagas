@@ -229,8 +229,8 @@ export const getShares = (createdAt: string) => {
   if (HOUR < 8) {
     return 0;
   }
-  const random = Math.sin(42);
-  const shares = Math.floor(HOUR * random/10000 * 100);
+  const random = Math.sin(10);
+  const shares = Math.floor(HOUR * random/10000 * 25);
   return Math.abs(shares)
 }
 
