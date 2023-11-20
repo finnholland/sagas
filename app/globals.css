@@ -210,16 +210,16 @@ pre code {
   scrollbar-color: #e9e9e9 #fbfbfb;
 }
 
-
-
 .html-wrap {
   display: flex;
+}
+.custom-html-style {
+  width: 100%;
 }
 
 iframe {
   display: block;
   margin: auto;
   height: 400px;
-  aspect-ratio: 16/9;
   border-radius: 1rem;
 }

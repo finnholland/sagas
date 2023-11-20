@@ -43,6 +43,19 @@ export const MdEditor = (props: MdEditorI) => {
     rel: ['nofollow', 'noopener', 'noreferrer'],
   };
 
+  const handleText = (text: string) => {
+    console.log(text)
+    const matches = text.match(/<iframe\s+width="(\d+)"\s+height="(\d+)"/i);
+    if (matches && matches.length === 3) {
+      const width = matches[1]; // Extracted width value
+      const height = matches[2];
+      text = text.replace(matches[0], `<iframe style="aspectRatio:${width}/${height}" `);
+      text = text.replace(/allow.*" /, "");
+      text = text.replace(/frameborder.*" /, "");
+    }
+    props.setPreBlog(prev => ({ ...prev, body: text }))
+  }
+
   return (
     <div className='mb-10 w-2/5'>
       <div className='border-sky-300 border-2 rounded-2xl overflow-clip flex h-fit max-h-full mb-5'>
@@ -53,13 +66,14 @@ export const MdEditor = (props: MdEditorI) => {
           view={{ menu: true, html: false, md: true }}
           canView={{ menu: true, html: true, both: false, fullScreen: false, hideMenu: false, md: true }}
           placeholder='blog loblaw'
-          onChange={(text) => props.setPreBlog(prev => ({ ...prev, body: text.text }))}
+          onChange={(text) => handleText(text.text)}
           plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
           className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500 max-w-full'
           renderHTML={text =>
             <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, [rehypeExternalLinks, options]]}>
               {text.replace(/<iframe width=".[0-9]*" height=".[0-9]*"/, "<iframe")}
-            </ReactMarkdown>}
+            </ReactMarkdown>
+          }
         />
       </div>
       <div className='flex-row flex justify-between mt-3 h'>

@@ -69,6 +69,11 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
       setIsOpenBin(false);
     }).catch((e: Error) => alert(e.message))
   }
+  const toggleEdit = (e: React.MouseEvent<HTMLElement>) => {
+    editBlog({ currentUser, setPreBlog, preBlog, blog, creatingBlog, setCreatingBlog, jwt: currentUser.jwt ?? '' });
+    setIsEditing(!isEditing)
+    e.stopPropagation();
+  }
 
 
   return (
@@ -99,10 +104,11 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
           <div className='flex-row flex items-center'>
             <Bubble name={blog.saga} type='saga' />
             {owned ? (
-              <div className='flex-row flex pl-3'>
-                <Edit className='cursor-pointer' aria-atomic={edit} width={25}
-                  onClick={() => { editBlog({ currentUser, setPreBlog, preBlog, blog, creatingBlog, setCreatingBlog, jwt: currentUser.jwt ?? '' }); setIsEditing(!isEditing) }}
-                  onMouseEnter={() => setEdit(true)} onMouseLeave={() => setEdit(false)}/>
+            <div className='flex-row flex pl-3'>
+              <button onClick={(e) => toggleEdit(e)}>
+                <Edit className='cursor-pointer' aria-atomic={edit} width={25} onMouseEnter={() => setEdit(true)} onMouseLeave={() => setEdit(false)}/>
+              </button>
+                
                 {blog.visible && !eyeHover || !blog.visible && eyeHover ?
                   (<Eye className='mx-3 cursor-pointer' stroke='#9C9C9C' width={25} 
                     onMouseEnter={() => setEyeHover(true)} onMouseLeave={() => setEyeHover(false)}
