@@ -1,10 +1,10 @@
 'use client'
-import { DATE_TYPE } from "@/app/constants"
+import { DATE_TYPE, OPTIONS } from "@/app/constants"
 import { deleteOrHideBlog, getComments } from "@/app/helpers/api"
-import { getDateAge, editBlog, handleImageUpload, getShares, likeBlogHelper } from "@/app/helpers/helpers"
+import { getDateAge, editBlog, handleImageUpload, getShares, likeBlogHelper, handleText } from "@/app/helpers/helpers"
 import { BlogI, CommentI, PreBlog, User } from "@/app/types"
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
-import Markdown from "react-markdown"
+import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Bubble } from "."
 import dynamic from "next/dynamic"
@@ -12,7 +12,9 @@ import Modal from 'react-modal';
 import ModalComponent from "./Modal"
 import { Heart, Share, CommentIcon, EyeOff, Eye, Edit, Bin } from "@/app/assets"
 import CommentModal from "./CommentModal"
-import rehypeRaw, {Options} from "rehype-raw"
+import rehypeRaw from 'rehype-raw';
+import rehypeExternalLinks, { Options } from "rehype-external-links"
+
 const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
 });
@@ -131,10 +133,14 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
                   view={{ menu: true, html: false, md: true }}
                   canView={{ menu: true, html: true, both: false, fullScreen: false, hideMenu: false, md: true }}
                   placeholder='blog loblaw'
-                  onChange={(text) => setPreBlog(prev => ({ ...prev, body: text.text }))}
+                  onChange={(text) => setPreBlog(prev => ({ ...prev, body: handleText(text.text) }))}
                   plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
                   className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500 max-w-full'
-                  renderHTML={text => <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{text}</Markdown>}
+                  renderHTML={text =>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, [rehypeExternalLinks, OPTIONS]]}>
+                      {text}
+                    </ReactMarkdown>
+                  }
                 />
               </div>
               <div className='flex-row flex justify-between mt-3'>
@@ -144,10 +150,10 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
                 </div>
           </div></div>) : (
             <div ref={blogRef}>
-              <Markdown className={`${blog.tags.length > 0 ? 'mb-5' : ''} markdown`} 
-              rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown className={`${blog.tags.length > 0 ? 'mb-5' : ''} markdown`} 
+              remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, [rehypeExternalLinks, OPTIONS]]}>
                 {blog.body}
-              </Markdown>
+              </ReactMarkdown>
             </div>
           )}
         

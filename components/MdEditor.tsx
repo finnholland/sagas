@@ -1,5 +1,5 @@
 'use client'
-import { handleImageUpload } from '@/app/helpers/helpers';
+import { handleImageUpload, handleText } from '@/app/helpers/helpers';
 import { BlogI, PreBlog, User } from '@/app/types';
 import React, { Dispatch, SetStateAction, useState } from 'react'
 import ReactMarkdown from 'react-markdown';
@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic';
 import { saveDraft } from '@/app/helpers/api';
 import rehypeRaw from 'rehype-raw';
 import rehypeExternalLinks, {Options} from "rehype-external-links"
+import { OPTIONS } from '@/app/constants';
 
 const Editor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
@@ -38,23 +39,6 @@ export const MdEditor = (props: MdEditorI) => {
       props.setCurrentUser(prev => ({...prev, draft: props.preBlog.body}))
     })
   }
-  const options: Options = {
-    target: '_blank',
-    rel: ['nofollow', 'noopener', 'noreferrer'],
-  };
-
-  const handleText = (text: string) => {
-    console.log(text)
-    const matches = text.match(/<iframe\s+width="(\d+)"\s+height="(\d+)"/i);
-    if (matches && matches.length === 3) {
-      const width = matches[1]; // Extracted width value
-      const height = matches[2];
-      text = text.replace(matches[0], `<iframe style="aspectRatio:${width}/${height}"`);
-      text = text.replace(/allow.*" /, "");
-      text = text.replace(/frameborder.*" /, "");
-    }
-    props.setPreBlog(prev => ({ ...prev, body: text }))
-  }
 
   return (
     <div className='mb-10 w-2/5'>
@@ -66,12 +50,12 @@ export const MdEditor = (props: MdEditorI) => {
           view={{ menu: true, html: false, md: true }}
           canView={{ menu: true, html: true, both: false, fullScreen: false, hideMenu: false, md: true }}
           placeholder='blog loblaw'
-          onChange={(text) => handleText(text.text)}
+          onChange={(text) => props.setPreBlog(prev => ({ ...prev, body: handleText(text.text) }))}
           plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
           className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500 max-w-full'
           renderHTML={text =>
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, [rehypeExternalLinks, options]]}>
-              {text.replace(/<iframe width=".[0-9]*" height=".[0-9]*"/, "<iframe")}
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, [rehypeExternalLinks, OPTIONS]]}>
+              {text}
             </ReactMarkdown>
           }
         />

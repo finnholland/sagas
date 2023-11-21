@@ -186,6 +186,19 @@ export const handleImageUpload = (file: File) => {
   });
 };
 
+export const handleText = (text: string): string => {
+  console.log(text)
+  const matches = text.match(/<iframe\s+width="(\d+)"\s+height="(\d+)"/i);
+  if (matches && matches.length === 3) {
+    const width = matches[1]; // Extracted width value
+    const height = matches[2];
+    text = text.replace(matches[0], `<iframe style="aspectRatio:${width}/${height}"`);
+    text = text.replace(/allow.*" /, "");
+    text = text.replace(/frameborder.*" /, "");
+  }
+  return text;
+}
+
 export const colourConverter = (image: string): {fill: string, stroke: string, tw: string} => {
   const replaced = image.replace('.png', '')
 
