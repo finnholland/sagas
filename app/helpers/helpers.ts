@@ -186,6 +186,19 @@ export const handleImageUpload = (file: File) => {
   });
 };
 
+export const handleText = (text: string): string => {
+  console.log(text)
+  const matches = text.match(/<iframe\s+width="(\d+)"\s+height="(\d+)"/i);
+  if (matches && matches.length === 3) {
+    const width = matches[1]; // Extracted width value
+    const height = matches[2];
+    text = text.replace(matches[0], `<iframe style="aspectRatio:${width}/${height}"`);
+    text = text.replace(/allow.*" /, "");
+    text = text.replace(/frameborder.*" /, "");
+  }
+  return text;
+}
+
 export const colourConverter = (image: string): {fill: string, stroke: string, tw: string} => {
   const replaced = image.replace('.png', '')
 
@@ -226,11 +239,11 @@ export const getShares = (createdAt: string) => {
   const end = moment(createdAt);
   const HOUR = Math.round(moment.duration(now.diff(end)).asHours());
 
-  if (HOUR < 8) {
+  if (HOUR < 48) {
     return 0;
   }
-  const random = Math.sin(42);
-  const shares = Math.floor(HOUR * random/10000 * 100);
+  const random = Math.sin(2.8);
+  const shares = Math.floor(HOUR * random / 100) ;
   return Math.abs(shares)
 }
 
@@ -241,7 +254,6 @@ interface LikeBlogI {
   liked: boolean
 }
 export const likeBlogHelper = ({ userId, blog, setBlog, liked }: LikeBlogI) => {
-  console.log(userId)
   likeItem(userId, blog.id, blog.createdAt, blog.likes, liked).then(() => {
     if (liked) {
       let blogT = blog;
