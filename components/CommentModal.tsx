@@ -122,9 +122,7 @@ const CommentModal: React.FC<CommentModalI> = ({userId, name, blog, setBlog, com
             <Bubble name={saga} type='saga' />
           </div>
         </div>
-          
         <div className="flex flex-row my-6 bottom-1 border-sky-300 px-8 items-center">
-          
           <div className='flex-row flex w-full items-end'>
             <div onClick={() => incrementIndex()} className="mr-2 relative flex cursor-pointer items-center w-fit">
               <Refresh className="absolute -top-1.5 -left-1.5 -right-1.5 -bottom-1.5" fill={ colourConverter(profileImages[index]).stroke} />
@@ -142,14 +140,11 @@ const CommentModal: React.FC<CommentModalI> = ({userId, name, blog, setBlog, com
                     <span className="text-xs font-light text-red-600 ml-4 select-none" onClick={() => storageHelper()}>
                       clear
                     </span> : null}
-                  
                 </div>
               </div>
               <textarea ref={textAreaRef} value={comment} onChange={handleChange} placeholder="leave a comment"
               className="mx-5 resize-none flex font-normal text-sm rounded-2xl bg-neutral-100 px-4 py-2 h-9" />
             </div>
-            
-
             <Send className="cursor-pointer" onClick={() => { (comment.trim() === '' || author.trim() === '') ? null : createCommentHelper() }}
               onMouseEnter={() => setSendHover(true)} onMouseLeave={() => setSendHover(false)} strokeWidth={1} height={40} aria-atomic={sendHover} stroke="#333" />
           </div>
@@ -159,7 +154,6 @@ const CommentModal: React.FC<CommentModalI> = ({userId, name, blog, setBlog, com
             next={() => console.log('loading new blogs')}
             hasMore={false}
             loader={''}
-            
             className='max-h-3/4-screen px-8 overflow-scroll flex flex-col'>
             {comments.map((c) => {
               return <Comment key={c.id} comment={c} userId={userId} setComment={setComment}/>
