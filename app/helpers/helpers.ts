@@ -226,11 +226,11 @@ export const getShares = (createdAt: string) => {
   const end = moment(createdAt);
   const HOUR = Math.round(moment.duration(now.diff(end)).asHours());
 
-  if (HOUR < 8) {
+  if (HOUR < 48) {
     return 0;
   }
-  const random = Math.sin(10);
-  const shares = Math.floor(HOUR * random/10000 * 25);
+  const random = Math.sin(2.8);
+  const shares = Math.floor(HOUR * random / 100) ;
   return Math.abs(shares)
 }
 
@@ -241,7 +241,6 @@ interface LikeBlogI {
   liked: boolean
 }
 export const likeBlogHelper = ({ userId, blog, setBlog, liked }: LikeBlogI) => {
-  console.log(userId)
   likeItem(userId, blog.id, blog.createdAt, blog.likes, liked).then(() => {
     if (liked) {
       let blogT = blog;

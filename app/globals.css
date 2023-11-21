@@ -154,6 +154,7 @@ a:hover {
 img {
   display: block;
   margin: auto;
+  width: 90%;
   border-radius: 20px;
   margin-top: 1rem;
   margin-bottom: 1rem;
@@ -220,6 +221,6 @@ pre code {
 iframe {
   display: block;
   margin: auto;
-  height: 400px;
+  width: 90%;
   border-radius: 1rem;
 }
