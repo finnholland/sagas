@@ -60,6 +60,13 @@ const ModalComponent = (props: ModalI) => {
     }
   }
 
+  const createTag = () => {
+    if (!props.isEditing) {
+      props.setPreBlog(prev => ({ ...prev, tags: [...prev.tags, tag] }))
+      setTag('');
+    }
+  }
+
   return (
     <Modal isOpen={props.isOpen} onRequestClose={() => props.setIsOpen(false)} ariaHideApp={false}
       className='border-0 left-1/2 top-1/2 my-10 -translate-x-1/2 -translate-y-1/2 w-1/3 fixed focus-visible:outline-none'>
@@ -78,7 +85,7 @@ const ModalComponent = (props: ModalI) => {
           <span className='font-bold text-sky-300 mr-3 w-10'>Tags</span>
           <div className='flex flex-row items-center'>
             <input disabled={props.isEditing} className='border-b-neutral-200 border-b-2 focus:border-sky-300 focus:outline-none mr-3' type="text" placeholder='tag' onChange={(e) => setTag(e.target.value)} />
-            <Plus onClick={() => { !props.isEditing ? props.setPreBlog(prev => ({ ...prev, tags: [...prev.tags, tag] })) : null; setTag('') }} width={20}/> 
+            <Plus onClick={() => createTag()} width={20}/> 
           </div>
         </div>
         <span className={`${props.preBlog.tags.length>0 ? '' : 'hidden'} text-sm text-neutral-600 mt-5 mb-1`}>current tags</span>

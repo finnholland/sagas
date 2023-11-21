@@ -1,5 +1,5 @@
 'use client'
-import { handleImageUpload } from '@/app/helpers/helpers';
+import { handleImageUpload, handleText } from '@/app/helpers/helpers';
 import { BlogI, PreBlog, User } from '@/app/types';
 import React, { Dispatch, SetStateAction, useState } from 'react'
 import ReactMarkdown from 'react-markdown';
@@ -7,6 +7,9 @@ import remarkGfm from 'remark-gfm';
 import ModalComponent from './Modal';
 import dynamic from 'next/dynamic';
 import { saveDraft } from '@/app/helpers/api';
+import rehypeRaw from 'rehype-raw';
+import rehypeExternalLinks, {Options} from "rehype-external-links"
+import { OPTIONS } from '@/app/constants';
 
 const Editor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
@@ -47,13 +50,17 @@ export const MdEditor = (props: MdEditorI) => {
           view={{ menu: true, html: false, md: true }}
           canView={{ menu: true, html: true, both: false, fullScreen: false, hideMenu: false, md: true }}
           placeholder='blog loblaw'
-          onChange={(text) => props.setPreBlog(prev => ({ ...prev, body: text.text }))}
+          onChange={(text) => props.setPreBlog(prev => ({ ...prev, body: handleText(text.text) }))}
           plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
           className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500 max-w-full'
-          renderHTML={text => <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{text}</ReactMarkdown>}
+          renderHTML={text =>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, [rehypeExternalLinks, OPTIONS]]}>
+              {text}
+            </ReactMarkdown>
+          }
         />
       </div>
-      <div className='flex-row flex justify-between mt-3'>
+      <div className='flex-row flex justify-between mt-3 h'>
         <button onClick={() => { props.setCreatingBlog(false); props.setIsEditing(false)}} className='bg-neutral-200 px-8 py-2 rounded-full text-neutral-400 font-bold'>cancel</button>
         <div>
           <button hidden={props.isEditing} onClick={saveDraftHelper} disabled={props.preBlog.body === props.currentUser.draft} className={`${props.preBlog.body !== props.currentUser.draft ? 'bg-sky-300' : 'bg-sky-200'} px-8 mr-3 py-2 rounded-full text-neutral-50 font-bold`}>save</button>

@@ -1,3 +1,5 @@
+import { Options } from "rehype-external-links";
+
 const userPool = {
   "REGION": "ap-southeast-2",
   "USER_POOL_ID": "ap-southeast-2_CVaA2YJhS",
@@ -14,9 +16,14 @@ const profileImages = [
   'cow.png', 'chicken.png', 'tiger.png', 'cat.png', 'bear.png', 'polarbear.png', 'pig.png', 'dog.png', 'rabbit.png', 'koala.png', 'frog.png', 'hamster.png'
 ]
 
+const OPTIONS: Options = {
+  target: '_blank',
+  rel: ['nofollow', 'noopener', 'noreferrer'],
+};
+
 const DATE_TYPE = {
   BLOG: 'BLOG',
   SAGA: 'SAGA',
   EDIT: 'EDIT',
 }
-export { API, userPool, DATE_TYPE, S3_URL, ENV, S3_BUCKET, REGION, DEFAULT_PROFILES_URL, profileImages }
+export { API, userPool, DATE_TYPE, S3_URL, ENV, S3_BUCKET, REGION, DEFAULT_PROFILES_URL, profileImages, OPTIONS }

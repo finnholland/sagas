@@ -1,7 +1,7 @@
 'use client'
-import { DATE_TYPE } from "@/app/constants"
+import { DATE_TYPE, OPTIONS } from "@/app/constants"
 import { deleteOrHideBlog, getComments } from "@/app/helpers/api"
-import { getDateAge, editBlog, handleImageUpload, getShares, likeBlogHelper } from "@/app/helpers/helpers"
+import { getDateAge, editBlog, handleImageUpload, getShares, likeBlogHelper, handleText } from "@/app/helpers/helpers"
 import { BlogI, CommentI, PreBlog, User } from "@/app/types"
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
@@ -12,6 +12,9 @@ import Modal from 'react-modal';
 import ModalComponent from "./Modal"
 import { Heart, Share, CommentIcon, EyeOff, Eye, Edit, Bin } from "@/app/assets"
 import CommentModal from "./CommentModal"
+import rehypeRaw from 'rehype-raw';
+import rehypeExternalLinks, { Options } from "rehype-external-links"
+
 const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
 });
@@ -68,6 +71,11 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
       setIsOpenBin(false);
     }).catch((e: Error) => alert(e.message))
   }
+  const toggleEdit = (e: React.MouseEvent<HTMLElement>) => {
+    editBlog({ currentUser, setPreBlog, preBlog, blog, creatingBlog, setCreatingBlog, jwt: currentUser.jwt ?? '' });
+    setIsEditing(!isEditing)
+    e.stopPropagation();
+  }
 
 
   return (
@@ -98,10 +106,11 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
           <div className='flex-row flex items-center'>
             <Bubble name={blog.saga} type='saga' />
             {owned ? (
-              <div className='flex-row flex pl-3'>
-                <Edit className='cursor-pointer' aria-atomic={edit} width={25}
-                  onClick={() => { editBlog({ currentUser, setPreBlog, preBlog, blog, creatingBlog, setCreatingBlog, jwt: currentUser.jwt ?? '' }); setIsEditing(!isEditing) }}
-                  onMouseEnter={() => setEdit(true)} onMouseLeave={() => setEdit(false)}/>
+            <div className='flex-row flex pl-3'>
+              <button onClick={(e) => toggleEdit(e)}>
+                <Edit className='cursor-pointer' aria-atomic={edit} width={25} onMouseEnter={() => setEdit(true)} onMouseLeave={() => setEdit(false)}/>
+              </button>
+                
                 {blog.visible && !eyeHover || !blog.visible && eyeHover ?
                   (<Eye className='mx-3 cursor-pointer' stroke='#9C9C9C' width={25} 
                     onMouseEnter={() => setEyeHover(true)} onMouseLeave={() => setEyeHover(false)}
@@ -124,10 +133,14 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
                   view={{ menu: true, html: false, md: true }}
                   canView={{ menu: true, html: true, both: false, fullScreen: false, hideMenu: false, md: true }}
                   placeholder='blog loblaw'
-                  onChange={(text) => setPreBlog(prev => ({ ...prev, body: text.text }))}
+                  onChange={(text) => setPreBlog(prev => ({ ...prev, body: handleText(text.text) }))}
                   plugins={['mode-toggle', 'link', 'block-code-inline', 'font-strikethrough', 'font-bold', 'font-italic', 'divider', 'block-code-block', 'block-quote', 'list-unordered', 'list-ordered', 'image', 'block-wrap']}
                   className='flex flex-grow rounded-2xl border-none h-fit max-h-full min-h-500 max-w-full'
-                  renderHTML={text => <ReactMarkdown remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>{text}</ReactMarkdown>}
+                  renderHTML={text =>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, [rehypeExternalLinks, OPTIONS]]}>
+                      {text}
+                    </ReactMarkdown>
+                  }
                 />
               </div>
               <div className='flex-row flex justify-between mt-3'>
@@ -136,12 +149,13 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
                   <button onClick={() => setIsOpen(true)} disabled={preBlog.body === ''} className={`${preBlog.body === '' ? 'bg-sky-200' : 'bg-sky-300'} px-8 py-2 rounded-full text-neutral-50 font-bold`}>confirm</button>
                 </div>
           </div></div>) : (
-              <div ref={blogRef}>
-                <ReactMarkdown className={`${blog.tags.length > 0 ? 'mb-5' : ''} markdown`} remarkPlugins={[remarkGfm]} linkTarget={'_blank'}>
-                  {blog.body}
-                </ReactMarkdown>
-              </div>
-        )}
+            <div ref={blogRef}>
+              <ReactMarkdown className={`${blog.tags.length > 0 ? 'mb-5' : ''} markdown`} 
+              remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, [rehypeExternalLinks, OPTIONS]]}>
+                {blog.body}
+              </ReactMarkdown>
+            </div>
+          )}
         
         <div className='flex-row flex flex-wrap'>
           {blog.tags.map((tag) => {
