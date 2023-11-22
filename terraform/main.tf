@@ -67,7 +67,8 @@ resource "aws_apigatewayv2_api" "api_sagas" {
       "GET", "POST", "OPTIONS"
     ]
     allow_origins  = [
-      "https://${var.name}.${var.domain_name}"
+      "https://${var.name}.${var.domain_name}",
+      "http://localhost:3000",
     ]
     expose_headers = [
       "date,x-api",
@@ -307,12 +308,12 @@ resource "aws_cognito_user_pool_client" "client" {
 
 resource "aws_cognito_user" "user" {
   user_pool_id = aws_cognito_user_pool.cog_up.id
-  username     = var.cog_user.id
+  username     = var.id
   attributes = {
-    "email"                 = "${var.cog_user.email}"
+    "email"                 = "${var.email}"
     "email_verified"        = "true"
-    "phone_number"          = "${var.cog_user.phone}"
+    "phone_number"          = "${var.phone}"
     "phone_number_verified" = "true"
-    "sub"                   = "${var.cog_user.id}"
+    "sub"                   = "${var.id}"
   }
 }

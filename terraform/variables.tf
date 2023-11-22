@@ -101,10 +101,6 @@ variable "attributes" {
 ]
 }
 
-variable "cog_user" {
-  default = {
-    id = "0a6d1f96-70ca-407b-a99c-569bb425faca"
-    email = "finnholland@outlook.com"
-    phone = "+61541107339"
-  }
-}
+variable "id" {}
+variable "email" {}
+variable "phone" {}
