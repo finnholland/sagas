@@ -5,11 +5,18 @@ variable "region" {
 variable "name" {
   default = "sagas"
 }
+variable "domain_name" {
+  default = "finnholland.dev"
+}
 variable "env" {
   default = "prod"
 }
 variable "runtime" {
   default = "python3.11"
+}
+
+variable "AWS_ID" {
+  default = ""
 }
 
 variable "function_names" {
@@ -94,10 +101,6 @@ variable "attributes" {
 ]
 }
 
-variable "cog_user" {
-  default = {
-    id = "0a6d1f96-70ca-407b-a99c-569bb425faca"
-    email = ""
-    phone = ""
-  }
-}
+variable "id" {}
+variable "email" {}
+variable "phone" {}
