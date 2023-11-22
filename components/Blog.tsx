@@ -55,7 +55,7 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
     getComments(blog.id, setComments)
   }, [])
 
-  const toggleVisibility = (state: boolean) => {
+  const toggleVisibility = (state: boolean, e: React.MouseEvent<HTMLElement>) => {
     deleteOrHideBlog(false, blog.visible, blog.id, blog.createdAt, currentUser.jwt).then(res => {
       setEyeHover(state);
       const blogsT = blogs;
@@ -63,6 +63,7 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
       setBlogs(blogsT);
       setIsOpenBin(false);
     }).catch((e: Error) => alert(e.message))
+    e.stopPropagation();
   }
   const deleteBlog = () => {
     deleteOrHideBlog(true, false, blog.id, blog.createdAt, currentUser.jwt).then(res => {
@@ -107,19 +108,21 @@ export const Blog: React.FC<BlogProps> = ({ blogT, owned, setPreBlog, preBlog, b
             <Bubble name={blog.saga} type='saga' />
             {owned ? (
             <div className='flex-row flex pl-3'>
-              <button onClick={(e) => toggleEdit(e)}>
-                <Edit className='cursor-pointer' aria-atomic={edit} width={25} onMouseEnter={() => setEdit(true)} onMouseLeave={() => setEdit(false)}/>
+              <button className='cursor-pointer' onClick={(e) => toggleEdit(e)}>
+                <Edit aria-atomic={edit} width={25} onMouseEnter={() => setEdit(true)} onMouseLeave={() => setEdit(false)}/>
               </button>
-                
+              <button className='mx-3 cursor-pointer' onClick={(e) => toggleVisibility(!blog.visible, e)}>
                 {blog.visible && !eyeHover || !blog.visible && eyeHover ?
                   (<Eye className='mx-3 cursor-pointer' stroke='#9C9C9C' width={25} 
-                    onMouseEnter={() => setEyeHover(true)} onMouseLeave={() => setEyeHover(false)}
-                    onClick={() => toggleVisibility(true)} />) :
+                    onMouseEnter={() => setEyeHover(true)} onMouseLeave={() => setEyeHover(false)}/>) :
                   (<EyeOff className='mx-3 cursor-pointer' stroke='#0092B2' width={25}
-                    onMouseEnter={() => setEyeHover(true)} onMouseLeave={() => setEyeHover(false)}
-                    onClick={() => toggleVisibility(false)} />)}
-              <Bin className='cursor-pointer' width={25} aria-atomic={bin} onClick={() => setIsOpenBin(true)}
-                onMouseEnter={() => setBin(true)} onMouseLeave={() => setBin(false)} />
+                    onMouseEnter={() => setEyeHover(true)} onMouseLeave={() => setEyeHover(false)}/>)}
+              </button>
+              <button className='cursor-pointer' onClick={(e) => { setIsOpenBin(true); e.stopPropagation()}}>
+                <Bin width={25} aria-atomic={bin}
+                  onMouseEnter={() => setBin(true)} onMouseLeave={() => setBin(false)} />
+              </button>
+
               </div>
             ) : (null)}
           </div>

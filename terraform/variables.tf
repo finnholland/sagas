@@ -5,11 +5,18 @@ variable "region" {
 variable "name" {
   default = "sagas"
 }
+variable "domain_name" {
+  default = "finnholland.dev"
+}
 variable "env" {
   default = "prod"
 }
 variable "runtime" {
   default = "python3.11"
+}
+
+variable "AWS_ID" {
+  default = ""
 }
 
 variable "function_names" {
