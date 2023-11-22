@@ -20,7 +20,7 @@ provider "aws" {
 }
 
 data "aws_acm_certificate" "certificate" {
-  domain = "finnholland.dev"
+  domain = var.domain_name
   statuses = ["ISSUED"]
 }
 
@@ -64,10 +64,10 @@ resource "aws_apigatewayv2_api" "api_sagas" {
       "*",
     ]
     allow_methods  = [
-      "*",
+      "GET", "POST", "OPTIONS"
     ]
     allow_origins  = [
-      "*",
+      "https://${var.name}.${var.domain_name}"
     ]
     expose_headers = [
       "date,x-api",
@@ -77,7 +77,7 @@ resource "aws_apigatewayv2_api" "api_sagas" {
 }
 
 resource "aws_apigatewayv2_domain_name" "api_domain" {
-  domain_name = "${var.name}${var.env == "prod" ? "" : var.env}.api.finnholland.dev"
+  domain_name = "${var.name}${var.env == "prod" ? "" : var.env}.api.${var.domain_name}"
 
   domain_name_configuration {
     certificate_arn = data.aws_acm_certificate.certificate.arn
@@ -204,7 +204,7 @@ resource "aws_iam_user_policy" "s3_write_policy" {
 resource "aws_iam_role" "lambda_role" {
   name   = "${var.name}_lambda_${var.env}"
   managed_policy_arns = [
-    "arn:aws:iam:::policy/service-role/AWSLambdaBasicExecutionRole-471ca146-cdc3-4877-916b-29f50dec886d",
+    "arn:aws:iam::${var.AWS_ID}:policy/service-role/AWSLambdaBasicExecutionRole-471ca146-cdc3-4877-916b-29f50dec886d",
   ]
   path = "/service-role/"
   inline_policy {
@@ -223,8 +223,8 @@ resource "aws_iam_role" "lambda_role" {
           "dynamodb:DeleteItem"
         ],
         Resource = [
-          "arn:aws:dynamodb:ap-southeast-2::table/${aws_dynamodb_table.ddb_sagas.name}",
-          "arn:aws:dynamodb:ap-southeast-2::table/${aws_dynamodb_table.ddb_sagas.name}/index/*"
+          "arn:aws:dynamodb:ap-southeast-2:${var.AWS_ID}:table/${aws_dynamodb_table.ddb_sagas.name}",
+          "arn:aws:dynamodb:ap-southeast-2:${var.AWS_ID}:table/${aws_dynamodb_table.ddb_sagas.name}/index/*"
         ]
       },
       {
@@ -233,7 +233,7 @@ resource "aws_iam_role" "lambda_role" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
-        Resource = "arn:aws:logs:ap-southeast-2::log-group:/aws/lambda/*"
+        Resource = "arn:aws:logs:ap-southeast-2:${var.AWS_ID}:log-group:/aws/lambda/*"
       },
       {
         Effect = "Allow",
@@ -260,12 +260,12 @@ resource "aws_iam_role" "lambda_role" {
 }
 
 data "aws_route53_zone" "r53_sagas" {
-  name = "finnholland.dev"
+  name = var.domain_name
 }
 
 resource "aws_route53_record" "api_record" {
   zone_id = data.aws_route53_zone.r53_sagas.id
-  name    = "sagas${var.env == "prod" ? "" : var.env}.api.finnholland.dev"
+  name    = "sagas${var.env == "prod" ? "" : var.env}.api.${var.domain_name}"
   type    = "A"
 
   alias {
