@@ -5,7 +5,7 @@ def lambda_handler(event, context):
     return {
         "statusCode": 200,
         "headers": {
-            "Access-Control-Allow-Headers": "",
+            "Access-Control-Allow-Headers": "Authorization",
             "Access-Control-Allow-Origin": "https://sagas.finnholland.dev",
             "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
         }

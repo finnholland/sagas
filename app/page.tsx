@@ -32,7 +32,6 @@ let last_evaluated_filter_key: string | null =  null
 const PAGE_SIZE = 5
 let tagsLength = 0;
 let sagasLength = 0;
-let blogsLength = 0;
 let storageArray: BlogI[] = []
 
 let jwt = '';
@@ -95,16 +94,12 @@ export default function Home() {
       Axios.get(`${API}/getBlogs`, { params: { last_evaluated_key: stringy, userId: userId } }).then(res => {
         const newBlogs = sortAndReduce([...blogs, ...res.data.items])
         setBlogs(newBlogs)
-        blogsLength = Math.ceil(newBlogs.length / PAGE_SIZE);
         last_evaluated_key = res.data.last_evaluated_key
       })
     } else {
       Axios.get(`${API}/getBlogs`, { params: { userId: userId } }).then(res => {
         last_evaluated_key = res.data.last_evaluated_key
-        let blogsT: BlogI[] = res.data.items
-        blogsT = blogsT.filter(b => b.createdAt === "2023-10-18T22:06:07+00:00")
         setBlogs(res.data.items)
-        blogsLength = Math.ceil(blogsT.length / PAGE_SIZE);
       });
     }
   }
@@ -123,10 +118,6 @@ export default function Home() {
       let paginated = pageAuthor.tags;
       setPageNumber(prev => ({ ...prev, tagPage: tagIncrement }));
       setPageTags(paginated.slice((tagIncrement - 1) * PAGE_SIZE, tagIncrement * PAGE_SIZE));
-    } else if (type === 'blogs' && blogIncrement > 0 && blogIncrement <= tagsLength){
-      let paginated = pageAuthor.tags;
-      setPageNumber(prev => ({ ...prev, tagPage: blogIncrement }));
-      setPageTags(paginated.slice((blogIncrement - 1) * PAGE_SIZE, blogIncrement * PAGE_SIZE));
     }
   }
 
@@ -222,11 +213,6 @@ export default function Home() {
             <div onClick={() => getBlogs(currentUser.id)} className={`cursor-pointer flex-row flex justify-center items-center ${last_evaluated_key === null || filtering ? 'hidden' : ''}`}>
               <span className='mr-2 text-sky-300'>load more</span>
               <ArrowDown className='cursor-pointer' height={25} stroke='#6ED0D7'/>
-            </div>
-            <div className={`flex-row flex justify-center items-center ${last_evaluated_filter_key === null || !filtering ? 'hidden' : ''}`}>
-              <ArrowLeft className='cursor-pointer' onClick={() => incrementPage('blogs', -1)} height={25} stroke={pageNumber.blogPage === 1 ? '#BEBEBE' : '#6ED0D7' } />
-              <span className='mx-5'>{pageNumber.blogPage} of {blogsLength}</span>
-              <ArrowRight className='cursor-pointer' onClick={() => incrementPage('blogs', 1)} height={25} stroke={pageNumber.blogPage === blogsLength ? '#BEBEBE' : '#6ED0D7' }/>
             </div>
           </InfiniteScroll>
 
